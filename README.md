@@ -12,6 +12,7 @@ An interactive real-time 3D structural mechanics and Finite Element Analysis (FE
    - [2.3 Ply Steer Mechanics & Residual Aligning Torque (PRAT)](#23-ply-steer-mechanics--residual-aligning-torque-prat)
    - [2.4 3D Contact Mechanics & Brush Model Discretization](#24-3d-contact-mechanics--brush-model-discretization)
    - [2.5 Catenary Effect & Cording Tension Mechanics](#25-catenary-effect--cording-tension-mechanics)
+   - [2.6 Commercial Vehicle Radial Truck Tire Architecture (TBR 315/70 R22.5)](#26-commercial-vehicle-radial-truck-tire-architecture-tbr-31570-r225)
 3. [Analytical & Mathematical Formulations](#3-analytical--mathematical-formulations)
    - [3.1 Vertical Deflection ($f_z$) & Contact Patch Length ($2a$)](#31-vertical-deflection-f_z--contact-patch-length-2a)
    - [3.2 Pantograph Trellis Belt Angle Change ($\Delta\beta$)](#32-pantograph-trellis-belt-angle-change-deltabeta)
@@ -34,6 +35,7 @@ An interactive real-time 3D structural mechanics and Finite Element Analysis (FE
    - [8.5 Structural Layer Cutaway Toggles & Color Mapping Modes](#85-structural-layer-cutaway-toggles--color-mapping-modes)
    - [8.6 3D Reference Coordinate Triad & HUD Navigation Bar](#86-3d-reference-coordinate-triad--hud-navigation-bar)
    - [8.7 Appearance & Shading Controls (Theme & Reflectance Modes)](#87-appearance--shading-controls-theme--reflectance-modes)
+   - [8.8 Real-Time Tire Model Switching (PLT vs. TBR)](#88-real-time-tire-model-switching-plt-vs-tbr)
 9. [Scientific References & Literature Citations](#9-scientific-references--literature-citations)
    - [9.1 Primary Academic Literature & Textbooks](#91-primary-academic-literature--textbooks)
    - [9.2 Industry Standards & SAE / ISO Norms](#92-industry-standards--sae--iso-norms)
@@ -43,7 +45,11 @@ An interactive real-time 3D structural mechanics and Finite Element Analysis (FE
 
 ## 1. Overview & Executive Summary
 
-The **TIRE-MECH 3D** simulator models the multi-physics behavior of a modern passenger car radial tire ($225/45\text{ R17}$) in real time. It couples carcass inflation mechanics, interlaminar belt shear, laminate-induced ply steer, 3D brush contact mechanics, and rolling kinematics inside a single zero-dependency HTML5 application.
+The **TIRE-MECH 3D** simulator models the multi-physics behavior of modern radial pneumatic tires in real time across two distinct industry-standard reference vehicle architectures:
+1. **Passenger Car Radial Tire (PLT 225/45 R17):** 2 crossed high-tensile steel belts ($\pm 22^\circ$), circumferential $0^\circ$ nylon spiral cap ply bandage, and 17" cast aluminum alloy wheel. Operating range: $F_z \in [1.0, 8.5]\text{ kN}$, $p_i \in [1.2, 3.6]\text{ bar}$ (Nominal: $F_z = 4.5\text{ kN}, p_i = 2.4\text{ bar}$).
+2. **Commercial Truck & Bus Radial Tire (TBR 315/70 R22.5):** Heavy commercial vehicle tire featuring **4 functional steel belts** ($+50^\circ$ breaker, $-18^\circ / +18^\circ$ working plies, $+18^\circ$ elastic protection ply), **omission of textile cap ply**, and 22.5" 10-stud hub-piloted commercial steel wheel disc. Operating range: $F_z \in [10.0, 50.0]\text{ kN}$, $p_i \in [5.0, 10.0]\text{ bar}$ (Nominal: $F_z = 32.5\text{ kN}, p_i = 8.5\text{ bar}$).
+
+The simulation couples carcass inflation mechanics, multi-ply interlaminar belt edge shear, laminate-induced ply steer, 3D brush contact mechanics with frictional slip transitions, and rolling kinematics inside a single zero-dependency HTML5 application.
 
 ### Evaluation Criteria & Status
 | Evaluation Criteria | Status | Observation |
@@ -111,7 +117,7 @@ The physical tire mechanics model operates in the standardized right-handed vehi
 
 #### Kinematic & Dynamic Behaviors:
 - **Slip Angle $\alpha$ (Yaw around $+Z$):** Yaws the entire wheel assembly (rim, carcass, steel belts, and contact patch) around the vertical yaw axis ($+Z$). A positive angle ($\alpha > 0$) points the wheel heading toward the left ($+Y$), generating a positive lateral force $F_y > 0$ along $+Y$ and a negative restoring self-aligning torque $M_z < 0$ around $+Z$ (Pacejka [10], Milliken [13], ISO 8855).
-- **Wheel Rotation $\Omega$ (Spin around $+Y$):** The wheel spins around the lateral rotation axis ($+Y$). Under free rolling ($v = \Omega R_{\text{eff}}$), longitudinal slip is $\kappa = 0\\%$.
+- **Wheel Rotation $\Omega$ (Spin around $+Y$):** The wheel spins around the lateral rotation axis ($+Y$). Under free rolling ($v = \Omega R_{\text{eff}}$), longitudinal slip is $\kappa = 0$%.
 - **Longitudinal Slip $\kappa$ (Slip along $+X$):** Generates torsional wind-up in the sidewall ($\gamma_{\text{sw}}$) and a tangential displacement of the belt package ($\Delta x_b$) relative to the rigid rim (Frank [9]):
   - *Full Braking ($\kappa < 0, F_x < 0$):* Belt shifts rearward ($-X$), producing a trailing-edge compression bulge (*Auslauf-Stauchungswulst*) (Gough & Whitehall [11]).
   - *Traction / Drive ($\kappa > 0, F_x > 0$):* Belt shifts forward ($+X$), producing a leading-edge compression bulge (*Einlauf-Stauchungswulst*) (Gough & Whitehall [11]).
@@ -147,6 +153,59 @@ The contact zone (contact patch length $2a$) is discretized using a physical 3D 
 ### 2.5 Catenary Effect & Cording Tension Mechanics
 - **90° Radial Carcass ($R_c = 298\text{ mm}$):** Acts as a catenary membrane suspended over the wheel rim (Clark [15], Timoshenko [17]). In the contact patch, flat deformation relieves membrane tension ($\Delta\sigma_{\text{patch}} \approx -48\text{ MPa}$), shifting tensile load into the upper crown arch.
 - **0° Nylon Cap Ply ($R_{\text{cap}} = 311\text{ mm}$):** Circumferential spiral bandage wraps over the steel belt package to counteract centrifugal tire expansion ($v^2$) and restrain belt edge peeling (Clark [15]).
+
+---
+
+### 2.6 Commercial Vehicle Radial Truck Tire Architecture (TBR 315/70 R22.5)
+*(References: Akasaka [3], Clark [15], Ridha & Theisen [22])*
+
+Commercial vehicle truck and bus radial (TBR) tires operate under significantly higher mechanical loads ($F_z = 30 - 50\text{ kN}$), severe inflation pressures ($p_i = 7 - 10\text{ bar}$), and harsh road contact conditions compared to passenger car tires. To sustain these demanding structural duty cycles, the 315/70 R22.5 tire employs an authentic **4-belt all-steel crown package** and specific commercial design principles:
+
+#### 1. The 4-Belt Steel Package Architecture:
+1. **Belt 1 (Breaker / Transition Ply, $+50^\circ$ at $R_{b1} = 482\text{ mm}$):**
+   - A wide, steep-angle steel cord layer that serves as an elastomeric mechanical transition between the flexible single-ply $90^\circ$ radial steel carcass and the rigid working belt package.
+   - Mitigates inter-ply stress concentrations, resists crown puncture penetration from road debris, and reduces radial shear strain at the carcass crown apex.
+2. **Belt 2 (Inner Working Ply, $-18^\circ$ at $R_{b2} = 488\text{ mm}$):**
+   - High-strength, high-modulus inextensible steel cords laid at a flat angle ($-18^\circ$).
+   - Forms the primary bottom chord of the circumferential triangulation truss, carrying high hoop tension from internal inflation pressure ($p_i \approx 8.5\text{ bar}$).
+3. **Belt 3 (Outer Working Ply, $+18^\circ$ at $R_{b3} = 494\text{ mm}$):**
+   - Crossed opposite to Belt 2 ($+18^\circ$) at a distinct stepped radius ($R_{b3} > R_{b2}$).
+   - Together with Belt 2, forms a stiff inextensible structural lattice that restricts circumferential stretching, stabilizes the tread surface against scuffing wear, and provides high cornering stiffness ($C_\alpha \approx 255\text{ kN/rad}$).
+4. **Belt 4 (Protection / Sacrificial Ply, $+18^\circ$ at $R_{b4} = 500\text{ mm}$):**
+   - Oriented parallel to the underlying working belt 3 ($+18^\circ$), preventing interlaminar shear scissoring between Belts 3 and 4.
+   - Built with high-elongation (HE) elastic steel cords designed to absorb rock drilling, stone trapping, and curb impacts without puncturing the load-bearing working plies below.
+   - **Retreadability Preservation:** Protects Belts 2 & 3 from environmental moisture and stone damage, ensuring the expensive steel casing can be buffed and retreaded 2 to 3 times over its service life.
+
+#### 2. Physical Mechanics of Cap Ply Omission in TBR Tires:
+Unlike passenger car tires (PLT), commercial truck tires intentionally **omit the $0^\circ$ textile (nylon/aramid) cap ply bandage**:
+- **Speed Rating vs. Centrifugal Growth:** Passenger car tires operate at high speeds ($210 - 300+\text{ km/h}$), where centrifugal force ($\sigma_{\text{cent}} \propto \rho \omega^2 R_0^2$) causes dynamic tire standing waves and crown lifting, necessitating a continuous circumferential $0^\circ$ restraint. Commercial heavy vehicles are electronically and legally speed-governed ($\le 100 - 130\text{ km/h}$), resulting in negligible centrifugal crown growth.
+- **Thermal Degradation Under Heavy Loading:** Under commercial loads ($F_z = 32.5\text{ kN}$), hysteretic energy dissipation in the thick rubber crown raises operating temperatures to $80 - 100^\circ\text{C}$. Textile polymer cords (such as Nylon 6.6) exhibit thermal shrinkage loss, mechanical modulus relaxation, and cord-to-rubber bond degradation under prolonged high-temperature compression cycles.
+- **Retreading Compatibility:** During casing re-manufacturing, the worn tread is mechanically buffed off using rotating wire rasps. A textile cap ply would be instantly shredded, destroying the casing; the steel protection ply (Belt 4) acts as a physical boundary for the buffing machine.
+
+#### 3. Commercial 22.5" 10-Stud Hub-Piloted Wheel Disc:
+- Fitted to a standardized 22.5" commercial drop-center rim ($R_{\text{rim}} = 286\text{ mm}$, $11.25\text{ in}$).
+- Procedurally generated heavy steel wheel disc featuring a central hub bore ($281\text{ mm}$ diameter), 10 wheel stud holes with hexagonal lug nuts arranged on a $335\text{ mm}$ Pitch Circle Diameter (PCD) per **ISO 4107 / DIN 74361**, and 8 perimeter cooling ventilation apertures.
+
+#### 4. Architecture & Engineering Comparison Matrix:
+
+| Specification Parameter | PLT (Passenger Car Tire) | TBR (Commercial Truck Tire) | Structural Significance |
+| :--- | :--- | :--- | :--- |
+| **Size Designation** | 225/45 R17 | 315/70 R22.5 | Nominal dimensional sizing |
+| **Unloaded Outer Radius ($R_0$)** | $316\text{ mm}$ | $506\text{ mm}$ | Determines rolling radius and ground clearance |
+| **Rim Radius ($R_{\text{rim}}$)** | $216\text{ mm}$ (17") | $286\text{ mm}$ (22.5") | Bead seating and spindle offset boundary |
+| **Section Width ($W$)** | $225\text{ mm}$ | $315\text{ mm}$ | Footprint width and contact area |
+| **Nominal Wheel Load ($F_z$)** | $4.5\text{ kN}$ (approx. $460\text{ kg}$) | $32.5\text{ kN}$ (approx. $3310\text{ kg}$) | Design operating axle load ($7.2\times$ scale) |
+| **Wheel Load Range ($F_z$)** | $1.0 - 8.5\text{ kN}$ | $10.0 - 50.0\text{ kN}$ | Dynamic simulator operating slider range |
+| **Nominal Inflation ($p_i$)** | $2.4\text{ bar}$ ($35\text{ psi}$) | $8.5\text{ bar}$ ($123\text{ psi}$) | Structural membrane pre-tension |
+| **Inflation Range ($p_i$)** | $1.2 - 3.6\text{ bar}$ | $5.0 - 10.0\text{ bar}$ | Operating pneumatic pressure bounds |
+| **Vertical Stiffness ($k_{\text{vert}}$)** | $\approx 186\text{ N/mm}$ | $\approx 1080\text{ N/mm}$ | Spring rate ($5.8\times$ stiffer in TBR) |
+| **Nominal Deflection ($f_z$)** | $24.2\text{ mm}$ | $30.1\text{ mm}$ | Static rim drop under rated load |
+| **Contact Length ($2a$)** | $148\text{ mm}$ | $264\text{ mm}$ | Contact footprint length |
+| **Belt Plies Count** | 2 Steel Belts | 4 Steel Belts | Breaker, working, and protection hierarchy |
+| **Belt Crown Angles** | $\pm 22.0^\circ$ (Adjustable) | $+50^\circ, -18^\circ, +18^\circ, +18^\circ$ | Cord orientation and triangulation lattice |
+| **Cap Ply Bandage** | $0^\circ$ Spiral Nylon Bandage | **None (Omitted)** | High-speed centrifugal vs. heavy load thermal design |
+| **Cornering Peak ($C_{\alpha,\text{peak}}$)**| $64.5\text{ kN/rad}$ ($1126\text{ N/deg}$) | $255.0\text{ kN/rad}$ ($4451\text{ N/deg}$) | Vehicle steering and lateral handling response |
+| **Wheel Construction** | 5-Spoke Alloy Rim | 10-Hole Steel Commercial Disc | Rim stiffness and heat dissipation |
 
 ---
 
@@ -273,8 +332,8 @@ During comprehensive code testing, 6 physical and visual discrepancies were iden
 | :--- | :--- | :--- | :--- | :--- |
 | **VER-01** | $F_z = 4.5\text{ kN}, p_i = 2.4\text{ bar}$ | $f_z \approx 24.2\text{ mm}, 2a \approx 148\text{ mm}$ | $f_z = 24.2\text{ mm}, 2a = 148\text{ mm}$ | **Passed** |
 | **VER-02** | $\alpha = 0^\circ$ (Zero Steer, Stack +1) | $F_{y,\text{tot}} = F_{y,\text{ply}} > 0, M_z = M_{z,\text{ply}} < 0$ | $F_y = +112\text{ N}, M_z = -6.5\text{ Nm}, \alpha_{\text{ply}} = +0.28^\circ$ | **Passed** |
-| **VER-03** | $\kappa = -12\\%$ (Full Braking) | $\Delta x_b < 0$, trailing-edge compression bulge (*Auslauf-Wulst*) | $\Delta x_b = -14.8\text{ mm}$, visual Auslauf-Wulst active | **Passed** |
-| **VER-04** | $\kappa = +12\\%$ (Full Traction) | $\Delta x_b > 0$, leading-edge compression bulge (*Einlauf-Wulst*) | $\Delta x_b = +14.8\text{ mm}$, visual Einlauf-Wulst active | **Passed** |
+| **VER-03** | $\kappa = -12$% (Full Braking) | $\Delta x_b < 0$, trailing-edge compression bulge (*Auslauf-Wulst*) | $\Delta x_b = -14.8\text{ mm}$, visual Auslauf-Wulst active | **Passed** |
+| **VER-04** | $\kappa = +12$% (Full Traction) | $\Delta x_b > 0$, leading-edge compression bulge (*Einlauf-Wulst*) | $\Delta x_b = +14.8\text{ mm}$, visual Einlauf-Wulst active | **Passed** |
 | **VER-05** | Extreme Load $F_z = 8.5\text{ kN}$ | Stable execution, non-negative radicands, no NaN/Infinity | Locked 60 FPS, zero numerical crashes | **Passed** |
 | **VER-06** | $\alpha = +4.0^\circ$ (Steering Left) | Positive side force $F_y > 0$, negative restoring torque $M_z < 0$ | $F_y = +1580\text{ N}, M_z = -50.4\text{ Nm}$ | **Passed** |
 | **VER-07** | $\alpha = -4.0^\circ$ (Steering Right) | Negative side force $F_y < 0$, positive restoring torque $M_z > 0$ | $F_y = -1393\text{ N}, M_z = +41.2\text{ Nm}$ | **Passed** |
@@ -291,7 +350,7 @@ An automated parameter sweep across 810 permutations:
 - $F_z \in \lbrace 1.0, 4.5, 8.5 \rbrace\text{ kN}$
 - $p_i \in \lbrace 1.2, 2.4, 3.6 \rbrace\text{ bar}$
 - $\alpha \in \lbrace -12^\circ, -4^\circ, 0^\circ, +4^\circ, +12^\circ \rbrace$
-- $\kappa \in \lbrace -12\\%, 0\\%, +12\\% \rbrace$
+- $\kappa \in \{-12, 0, +12\}$%
 - $\beta \in \lbrace 15^\circ, 22^\circ, 32^\circ \rbrace$
 - $\text{sign}_{\text{stack}} \in \lbrace +1, -1 \rbrace$
 
@@ -299,21 +358,21 @@ An automated parameter sweep across 810 permutations:
 
 ---
 
-## 7. Validated Telemetry Reference (Nominal Operating Point)
+## 7. Validated Telemetry Reference (Nominal Operating Points)
 
-| Parameter / Metric | Nominal Value ($F_z = 4.5\text{ kN}, p_i = 2.4\text{ bar}$) | Physical Description |
-| :--- | :--- | :--- |
-| **Vertical Deflection ($f_z$)** | $24.2\text{ mm}$ | Total vertical rim displacement |
-| **Contact Patch Length ($2a$)** | $148\text{ mm}$ | Geometric contact footprint length |
-| **Lateral Force ($F_y$) at $\alpha = +4^\circ$** | $+1580\text{ N}$ | Integrated tire side force |
-| **Self-Aligning Torque ($M_z$) at $\alpha = +4^\circ$** | $-50.4\text{ Nm}$ | Restoring torque opposing yaw steer |
-| **Ply Steer Force ($F_{y,\text{ply}}$)** | $+112\text{ N}$ (at $\alpha = 0^\circ$) | Laminate residual lateral force |
-| **Ply Steer Torque (PRAT)** | $-6.5\text{ Nm}$ (at $\alpha = 0^\circ$) | Residual self-aligning moment |
-| **Cornering Stiffness ($C_\alpha$)** | $1045\text{ N/deg}$ ($59.9\text{ kN/rad}$) | Initial cornering stiffness slope |
-| **Cornering Coefficient ($CC_\alpha$)** | $0.232\text{ deg}^{-1}$ ($13.3\text{ rad}^{-1}$) | $C_\alpha / F_z$ (load degressivity metric) |
-| **Adhesion / Sliding Ratio** | 68% Adhesion / 32% Sliding | Contact patch shear adherence state |
-| **Sidewall Wind-Up Angle ($\gamma_{\text{sw}}$)** | $0.00^\circ$ (at $\kappa = 0\\%$) | Torsional sidewall shear displacement |
-| **Tangential Belt Shift ($\Delta x_b$)** | $0.0\text{ mm}$ (at $\kappa = 0\\%$) | Belt displacement relative to rim |
+| Parameter / Metric | PLT Nominal (225/45 R17, $F_z = 4.5\text{ kN}, p_i = 2.4\text{ bar}$) | TBR Nominal (315/70 R22.5, $F_z = 32.5\text{ kN}, p_i = 8.5\text{ bar}$) | Physical Description |
+| :--- | :--- | :--- | :--- |
+| **Vertical Deflection ($f_z$)** | $24.2\text{ mm}$ | $30.1\text{ mm}$ | Total vertical rim displacement |
+| **Contact Patch Length ($2a$)** | $148\text{ mm}$ | $264\text{ mm}$ | Geometric contact footprint length |
+| **Lateral Force ($F_y$) at $\alpha = +4^\circ$** | $+1580\text{ N}$ | $+6820\text{ N}$ | Integrated tire side force |
+| **Self-Aligning Torque ($M_z$) at $\alpha = +4^\circ$** | $-50.4\text{ Nm}$ | $-214.5\text{ Nm}$ | Restoring torque opposing yaw steer |
+| **Ply Steer Force ($F_{y,\text{ply}}$)** | $+112\text{ N}$ (at $\alpha = 0^\circ$) | $+542\text{ N}$ (at $\alpha = 0^\circ$) | Laminate residual lateral force |
+| **Ply Steer Torque (PRAT)** | $-6.5\text{ Nm}$ (at $\alpha = 0^\circ$) | $-31.8\text{ Nm}$ (at $\alpha = 0^\circ$) | Residual self-aligning moment |
+| **Cornering Stiffness ($C_\alpha$)** | $1045\text{ N/deg}$ ($59.9\text{ kN/rad}$) | $4388\text{ N/deg}$ ($251.4\text{ kN/rad}$) | Initial cornering stiffness slope |
+| **Cornering Coefficient ($CC_\alpha$)** | $0.232\text{ deg}^{-1}$ ($13.3\text{ rad}^{-1}$) | $0.135\text{ deg}^{-1}$ ($7.73\text{ rad}^{-1}$) | $C_\alpha / F_z$ (load degressivity metric) |
+| **Adhesion / Sliding Ratio** | 68% Adhesion / 32% Sliding | 74% Adhesion / 26% Sliding | Contact patch shear adherence state |
+| **Sidewall Wind-Up Angle ($\gamma_{\text{sw}}$)** | $0.00^\circ$ (at $\kappa = 0$%) | $0.00^\circ$ (at $\kappa = 0$%) | Torsional sidewall shear displacement |
+| **Tangential Belt Shift ($\Delta x_b$)** | $0.0\text{ mm}$ (at $\kappa = 0$%) | $0.0\text{ mm}$ (at $\kappa = 0$%) | Belt displacement relative to rim |
 
 ---
 
@@ -339,15 +398,15 @@ An automated parameter sweep across 810 permutations:
 - **Navigation Controls:** Left-click + drag to orbit, scroll wheel to zoom, right-click + drag to pan.
 
 ### 8.4 Parameter Sliders & Quick-Test Controls
-- **Vertical Load ($F_z$):** $1.0\text{ kN}$ to $8.5\text{ kN}$ (step: $0.1\text{ kN}$).
-- **Inflation Pressure ($p_i$):** $1.2\text{ bar}$ to $3.6\text{ bar}$ (step: $0.05\text{ bar}$).
+- **Vertical Load ($F_z$):** $1.0\text{ kN}$ to $8.5\text{ kN}$ for PLT (step: $0.1\text{ kN}$); $10.0\text{ kN}$ to $50.0\text{ kN}$ for TBR (step: $0.5\text{ kN}$).
+- **Inflation Pressure ($p_i$):** $1.2\text{ bar}$ to $3.6\text{ bar}$ for PLT (step: $0.05\text{ bar}$); $5.0\text{ bar}$ to $10.0\text{ bar}$ for TBR (step: $0.1\text{ bar}$).
 - **Slip Angle ($\alpha$):** $-12.0^\circ$ (Right) to $+12.0^\circ$ (Left) (step: $0.2^\circ$). Includes $\alpha = 0^\circ$ (ply steer isolation) and $\alpha = +6^\circ$ demonstration buttons.
-- **Longitudinal Slip ($\kappa$):** $-12.0\\%$ to $+12.0\\%$ (step: $0.5\\%$). Includes quick-test buttons: Full Braking (-12%), Free Rolling (0%), and Traction (+12%).
-- **Crown Belt Angle ($\pm\beta_0$):** $15.0^\circ$ to $32.0^\circ$ (step: $0.5^\circ$).
+- **Longitudinal Slip ($\kappa$):** $-12.0$% to $+12.0$% (step: $0.5$%). Includes quick-test buttons: Full Braking (-12%), Free Rolling (0%), and Traction (+12%).
+- **Crown Belt Angle ($\pm\beta_0$):** $15.0^\circ$ to $32.0^\circ$ for PLT (step: $0.5^\circ$); $14.0^\circ$ to $25.0^\circ$ for TBR (step: $0.5^\circ$).
 - **Rolling Speed ($v$):** $0\text{ km/h}$ to $100\text{ km/h}$ (step: $5\text{ km/h}$).
 
 ### 8.5 Structural Layer Cutaway Toggles & Color Mapping Modes
-- **Individual Layer Checkboxes:** Rim/Bead, 90° Carcass, Belt Ply 1, Belt Ply 2, 0° Cap Ply, Tread/Sidewall, Stepped Cutaway, Protractor Overlay (±β & α), and Street Surface / Grid.
+- **Individual Layer Checkboxes:** Rim/Bead, 90° Carcass, Belt Ply 1, Belt Ply 2, Belt Ply 3 (TBR), Belt Ply 4 (TBR), 0° Cap Ply (PLT), Tread/Sidewall, Stepped Cutaway, Protractor Overlay (±β & α), and Street Surface / Grid.
 - **Street / Ground Plane Transparency:** The solid street plane is rendered completely transparent (`opacity = 0`, hidden), allowing unobstructed bottom-up inspection of contact patch shear and bristle kinematics, while a subtle reference road grid remains slightly visible (`opacity = 0.20`). The ground grid and flow lines can be toggled on/off via the `Street` checkbox.
 - **Color Mapping Modes:**
   - `σ_c Absolute`: Total cord tensile stress [MPa].
@@ -371,6 +430,33 @@ An automated parameter sweep across 810 permutations:
   - **High-Gloss:** Physical clearcoat topcoat (`clearcoat = 0.95`, `clearcoatRoughness = 0.10`) simulating wet tire dressing sheen, polished chrome rim, and sharp specular glints.
   - **CAE Matte:** Technical low-glare diffuse inspection finish (`roughness = 0.96`, zero specular reflections) with neutral overhead illumination to maximize FEA stress tensor readability.
   - **Showroom:** Dual-tone automotive presentation setup with warm golden key illumination (`0xffedd5`), electric cyan rim back-light (`0x06b6d4`), and violet road underglow.
+
+### 8.8 Real-Time Tire Model Switching (PLT vs. TBR)
+A dedicated segmented switch control in the application header allows instant, seamless switching between:
+- **PLT (Passenger Car Tire, 225/45 R17):**
+  - High-speed passenger car construction with 2 crossed steel belts ($\pm 22^\circ$) and $0^\circ$ nylon cap ply bandage.
+  - Procedural 5-spoke lightweight cast aluminum alloy wheel.
+  - Parameter bounds: Vertical load $F_z \in [1.0, 8.5]\text{ kN}$, inflation pressure $p_i \in [1.2, 3.6]\text{ bar}$, belt angle $\beta \in [15^\circ, 32^\circ]$.
+  - Nominal baseline: $F_z = 4.5\text{ kN}, p_i = 2.4\text{ bar}, \beta = 22.0^\circ$.
+- **TBR (Commercial Truck & Bus Radial, 315/70 R22.5):**
+  - Heavy commercial vehicle architecture with 4 functional steel belts ($+50^\circ, -18^\circ, +18^\circ, +18^\circ$) and intentional omission of the textile cap ply bandage.
+  - Procedural 22.5" 10-hole heavy commercial steel wheel disc with hub bore and lug nuts on a $335\text{ mm}$ PCD per ISO 4107.
+  - Parameter bounds: Vertical load $F_z \in [10.0, 50.0]\text{ kN}$, inflation pressure $p_i \in [5.0, 10.0]\text{ bar}$, working belt angle $\beta \in [14^\circ, 25^\circ]$.
+  - Nominal baseline: $F_z = 32.5\text{ kN}, p_i = 8.5\text{ bar}, \beta = 18.0^\circ$.
+
+#### Dynamic Reconfiguration Pipeline:
+1. **Dynamic Parameter Sliders:**
+   - Sliders dynamically adjust their minimum, maximum, step size, and display labels.
+   - When switching to TBR, the load slider shifts to $10 - 50\text{ kN}$ (default $32.5\text{ kN}$), and pressure shifts to $5 - 10\text{ bar}$ (default $8.5\text{ bar}$).
+2. **Layer Checkbox Hierarchy:**
+   - In PLT mode, checkboxes for Belts 1 & 2 and the Cap Ply are active. Belts 3 & 4 rows are cleanly hidden.
+   - In TBR mode, Belts 3 and 4 checkboxes are revealed and enabled; the Cap Ply row is automatically hidden and disabled.
+3. **Multi-Ply Live Cord Stresses Telemetry:**
+   - The right telemetry panel displays real-time minimum and maximum tensile stresses across all 4 belt plies in TBR mode ($\sigma_{c,b1}, \sigma_{c,b2}, \sigma_{c,b3}, \sigma_{c,b4}$), validating that working plies 2 & 3 carry the highest tensile stresses while protective belt 4 remains in reserve.
+4. **Rescaled 2D FEA Characteristic Curves:**
+   - The live $C_\alpha(F_z)$ and $CC_\alpha(F_z)$ characteristic plots automatically re-scale axes ($0 - 5400\text{ N/deg}$ vertical axis and $10 - 50\text{ kN}$ horizontal axis for TBR), accurately plotting commercial tire cornering stiffness progression.
+5. **Camera Distance & Target Auto-Scaling:**
+   - Orbit controls and camera presets scale dynamically ($1.56\times$ for the larger $R_0 = 506\text{ mm}$ TBR tire) to keep the tire framed cleanly in the viewport.
 
 ---
 
