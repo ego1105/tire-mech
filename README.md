@@ -111,7 +111,7 @@ The physical tire mechanics model operates in the standardized right-handed vehi
 
 #### Kinematic & Dynamic Behaviors:
 - **Slip Angle $\alpha$ (Yaw around $+Z$):** Yaws the entire wheel assembly (rim, carcass, steel belts, and contact patch) around the vertical yaw axis ($+Z$). A positive angle ($\alpha > 0$) points the wheel heading toward the left ($+Y$), generating a positive lateral force $F_y > 0$ along $+Y$ and a negative restoring self-aligning torque $M_z < 0$ around $+Z$ (Pacejka [10], Milliken [13], ISO 8855).
-- **Wheel Rotation $\Omega$ (Spin around $+Y$):** The wheel spins around the lateral rotation axis ($+Y$). Under free rolling ($v = \Omega R_{\text{eff}}$), longitudinal slip is $\kappa = 0\%$.
+- **Wheel Rotation $\Omega$ (Spin around $+Y$):** The wheel spins around the lateral rotation axis ($+Y$). Under free rolling ($v = \Omega R_{\text{eff}}$), longitudinal slip is $\kappa = 0\\%$.
 - **Longitudinal Slip $\kappa$ (Slip along $+X$):** Generates torsional wind-up in the sidewall ($\gamma_{\text{sw}}$) and a tangential displacement of the belt package ($\Delta x_b$) relative to the rigid rim (Frank [9]):
   - *Full Braking ($\kappa < 0, F_x < 0$):* Belt shifts rearward ($-X$), producing a trailing-edge compression bulge (*Auslauf-Stauchungswulst*) (Gough & Whitehall [11]).
   - *Traction / Drive ($\kappa > 0, F_x > 0$):* Belt shifts forward ($+X$), producing a leading-edge compression bulge (*Einlauf-Stauchungswulst*) (Gough & Whitehall [11]).
@@ -273,8 +273,8 @@ During comprehensive code testing, 6 physical and visual discrepancies were iden
 | :--- | :--- | :--- | :--- | :--- |
 | **VER-01** | $F_z = 4.5\text{ kN}, p_i = 2.4\text{ bar}$ | $f_z \approx 24.2\text{ mm}, 2a \approx 148\text{ mm}$ | $f_z = 24.2\text{ mm}, 2a = 148\text{ mm}$ | **Passed** |
 | **VER-02** | $\alpha = 0^\circ$ (Zero Steer, Stack +1) | $F_{y,\text{tot}} = F_{y,\text{ply}} > 0, M_z = M_{z,\text{ply}} < 0$ | $F_y = +112\text{ N}, M_z = -6.5\text{ Nm}, \alpha_{\text{ply}} = +0.28^\circ$ | **Passed** |
-| **VER-03** | $\kappa = -12\%$ (Full Braking) | $\Delta x_b < 0$, trailing-edge compression bulge (*Auslauf-Wulst*) | $\Delta x_b = -14.8\text{ mm}$, visual Auslauf-Wulst active | **Passed** |
-| **VER-04** | $\kappa = +12\%$ (Full Traction) | $\Delta x_b > 0$, leading-edge compression bulge (*Einlauf-Wulst*) | $\Delta x_b = +14.8\text{ mm}$, visual Einlauf-Wulst active | **Passed** |
+| **VER-03** | $\kappa = -12\\%$ (Full Braking) | $\Delta x_b < 0$, trailing-edge compression bulge (*Auslauf-Wulst*) | $\Delta x_b = -14.8\text{ mm}$, visual Auslauf-Wulst active | **Passed** |
+| **VER-04** | $\kappa = +12\\%$ (Full Traction) | $\Delta x_b > 0$, leading-edge compression bulge (*Einlauf-Wulst*) | $\Delta x_b = +14.8\text{ mm}$, visual Einlauf-Wulst active | **Passed** |
 | **VER-05** | Extreme Load $F_z = 8.5\text{ kN}$ | Stable execution, non-negative radicands, no NaN/Infinity | Locked 60 FPS, zero numerical crashes | **Passed** |
 | **VER-06** | $\alpha = +4.0^\circ$ (Steering Left) | Positive side force $F_y > 0$, negative restoring torque $M_z < 0$ | $F_y = +1580\text{ N}, M_z = -50.4\text{ Nm}$ | **Passed** |
 | **VER-07** | $\alpha = -4.0^\circ$ (Steering Right) | Negative side force $F_y < 0$, positive restoring torque $M_z > 0$ | $F_y = -1393\text{ N}, M_z = +41.2\text{ Nm}$ | **Passed** |
@@ -288,12 +288,12 @@ During comprehensive code testing, 6 physical and visual discrepancies were iden
 
 ### 6.3 Numerical Permutation Stress Test (810 Cases)
 An automated parameter sweep across 810 permutations:
-- $F_z \in \{1.0, 4.5, 8.5\}\text{ kN}$
-- $p_i \in \{1.2, 2.4, 3.6\}\text{ bar}$
-- $\alpha \in \{-12^\circ, -4^\circ, 0^\circ, +4^\circ, +12^\circ\}$
-- $\kappa \in \{-12\%, 0\%, +12\%\}$
-- $\beta \in \{15^\circ, 22^\circ, 32^\circ\}$
-- $\text{sign}_{\text{stack}} \in \{+1, -1\}$
+- $F_z \in \lbrace 1.0, 4.5, 8.5 \rbrace\text{ kN}$
+- $p_i \in \lbrace 1.2, 2.4, 3.6 \rbrace\text{ bar}$
+- $\alpha \in \lbrace -12^\circ, -4^\circ, 0^\circ, +4^\circ, +12^\circ \rbrace$
+- $\kappa \in \lbrace -12\\%, 0\\%, +12\\% \rbrace$
+- $\beta \in \lbrace 15^\circ, 22^\circ, 32^\circ \rbrace$
+- $\text{sign}_{\text{stack}} \in \lbrace +1, -1 \rbrace$
 
 **Result: 0 NaN values, 0 infinite values, 0 unhandled exceptions.**
 
@@ -311,9 +311,9 @@ An automated parameter sweep across 810 permutations:
 | **Ply Steer Torque (PRAT)** | $-6.5\text{ Nm}$ (at $\alpha = 0^\circ$) | Residual self-aligning moment |
 | **Cornering Stiffness ($C_\alpha$)** | $1045\text{ N/deg}$ ($59.9\text{ kN/rad}$) | Initial cornering stiffness slope |
 | **Cornering Coefficient ($CC_\alpha$)** | $0.232\text{ deg}^{-1}$ ($13.3\text{ rad}^{-1}$) | $C_\alpha / F_z$ (load degressivity metric) |
-| **Adhesion / Sliding Ratio** | $68\%$ Adhesion / $32\%$ Sliding | Contact patch shear adherence state |
-| **Sidewall Wind-Up Angle ($\gamma_{\text{sw}}$)** | $0.00^\circ$ (at $\kappa = 0\%$) | Torsional sidewall shear displacement |
-| **Tangential Belt Shift ($\Delta x_b$)** | $0.0\text{ mm}$ (at $\kappa = 0\%$) | Belt displacement relative to rim |
+| **Adhesion / Sliding Ratio** | 68% Adhesion / 32% Sliding | Contact patch shear adherence state |
+| **Sidewall Wind-Up Angle ($\gamma_{\text{sw}}$)** | $0.00^\circ$ (at $\kappa = 0\\%$) | Torsional sidewall shear displacement |
+| **Tangential Belt Shift ($\Delta x_b$)** | $0.0\text{ mm}$ (at $\kappa = 0\\%$) | Belt displacement relative to rim |
 
 ---
 
@@ -342,7 +342,7 @@ An automated parameter sweep across 810 permutations:
 - **Vertical Load ($F_z$):** $1.0\text{ kN}$ to $8.5\text{ kN}$ (step: $0.1\text{ kN}$).
 - **Inflation Pressure ($p_i$):** $1.2\text{ bar}$ to $3.6\text{ bar}$ (step: $0.05\text{ bar}$).
 - **Slip Angle ($\alpha$):** $-12.0^\circ$ (Right) to $+12.0^\circ$ (Left) (step: $0.2^\circ$). Includes $\alpha = 0^\circ$ (ply steer isolation) and $\alpha = +6^\circ$ demonstration buttons.
-- **Longitudinal Slip ($\kappa$):** $-12.0\%$ to $+12.0\%$ (step: $0.5\%$). Includes quick-test buttons: Full Braking ($-12\%$), Free Rolling ($0\%$), and Traction ($+12\%$).
+- **Longitudinal Slip ($\kappa$):** $-12.0\\%$ to $+12.0\\%$ (step: $0.5\\%$). Includes quick-test buttons: Full Braking (-12%), Free Rolling (0%), and Traction (+12%).
 - **Crown Belt Angle ($\pm\beta_0$):** $15.0^\circ$ to $32.0^\circ$ (step: $0.5^\circ$).
 - **Rolling Speed ($v$):** $0\text{ km/h}$ to $100\text{ km/h}$ (step: $5\text{ km/h}$).
 
