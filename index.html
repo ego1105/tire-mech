@@ -409,7 +409,7 @@
                     <button id="tire-btn-plt" onclick="setTireModel('plt')" class="tire-model-btn active px-2 py-0.5 rounded text-[10px] font-semibold transition" title="Passenger Car Tire: 225/45 R17 (2 Steel Belts ±22° + 0° Nylon Cap Ply)">
                         🚗 PLT 225/45 R17
                     </button>
-                    <button id="tire-btn-tbr" onclick="setTireModel('tbr')" class="tire-model-btn px-2 py-0.5 rounded text-[10px] font-semibold transition" title="Commercial Vehicle Tire: 315/70 R22.5 (4 Steel Belts +50°/-18°/+18°/+18°, No Cap Ply)">
+                    <button id="tire-btn-tbr" onclick="setTireModel('tbr')" class="tire-model-btn px-2 py-0.5 rounded text-[10px] font-semibold transition" title="Commercial Vehicle Tire: 315/70 R22.5 (4 Steel Belts -50°/-18°/+18°/+18°, No Cap Ply)">
                         🚛 TBR 315/70 R22.5
                     </button>
                 </div>
@@ -924,7 +924,7 @@
                 id: 'tbr',
                 name: '315/70 R22.5 (TBR)',
                 badge: '315/70 R22.5 (TBR)',
-                subtitle: 'Commercial Vehicle Tire • 4 Steel Belts (+50°/-18°/+18°/+18°) • No Cap Ply • 22.5" Rim',
+                subtitle: 'Commercial Vehicle Tire • 4 Steel Belts (-50°/-18°/+18°/+18°) • No Cap Ply • 22.5" Rim',
                 R_UNLOADED: 5.06,         // 506 mm outer tread radius
                 R_CARCASS_CROWN: 4.76,    // 476 mm 90° radial carcass crown radius
                 R_BELT_1: 4.82,           // 482 mm Belt 1 Breaker/Transition radius
@@ -948,7 +948,7 @@
                 OFFSET_TREAD: 0.225,
                 hasCapPly: false,
                 belts: [
-                    { id: 'belt1', name: 'Belt 1 (+50°)', angle: 50.0, R: 4.82, halfWidth: 1.15, offset: 0.046, sMax: 0.52, cutawaySpan: Math.PI * 1.78 },
+                    { id: 'belt1', name: 'Belt 1 (-50°)', angle: -50.0, R: 4.82, halfWidth: 1.15, offset: 0.046, sMax: 0.52, cutawaySpan: Math.PI * 1.78 },
                     { id: 'belt2', name: 'Belt 2 (-18°)', angle: -18.0, R: 4.88, halfWidth: 1.35, offset: 0.088, sMax: 0.50, cutawaySpan: Math.PI * 1.62 },
                     { id: 'belt3', name: 'Belt 3 (+18°)', angle: 18.0, R: 4.93, halfWidth: 1.25, offset: 0.130, sMax: 0.46, cutawaySpan: Math.PI * 1.46 },
                     { id: 'belt4', name: 'Belt 4 (+18°)', angle: 18.0, R: 4.98, halfWidth: 0.95, offset: 0.170, sMax: 0.38, cutawaySpan: Math.PI * 1.30 }
@@ -1170,7 +1170,7 @@
                 scaleMaxMPa = activeTireModel === 'tbr' ? 165.0 : 125.0;
 
             } else if (layerType === 'belt1') {
-                // BELT 1 (PLT: Working 1 at +22°; TBR: Breaker/Transition at +50°)
+                // BELT 1 (PLT: Working 1 at +22°; TBR: Breaker/Transition at -50°)
                 const isTBR = (activeTireModel === 'tbr');
                 const betaDeg = isTBR ? 50.0 : state.beta;
                 const betaRad = THREE.MathUtils.degToRad(betaDeg);
@@ -1433,7 +1433,8 @@
                 });
 
                 [-0.45, 0.0, 0.45].forEach(sSample => {
-                    const sb1 = evaluateCordStressAndColor('belt1', psiSample, sSample, fpProx, state.beltStackSign, dummyColor).sigmaTotal;
+                    const b1Sign = (activeTireModel === 'tbr') ? -state.beltStackSign : state.beltStackSign;
+                    const sb1 = evaluateCordStressAndColor('belt1', psiSample, sSample, fpProx, b1Sign, dummyColor).sigmaTotal;
                     if (sb1 < b1Min) b1Min = sb1;
                     if (sb1 > b1Max) b1Max = sb1;
 
@@ -2404,7 +2405,10 @@
                             const scalar = computeLayerFEAScalar(layerType, info.psi, s, info.footprintProximity);
                             getFEAColor(scalar, tmpCol);
                         } else {
-                            const cordSign = layerType === 'belt2' ? -state.beltStackSign : state.beltStackSign;
+                            const isTBRMesh = (activeTireModel === 'tbr');
+                            const cordSign = isTBRMesh
+                                ? ((layerType === 'belt1' || layerType === 'belt2') ? -state.beltStackSign : state.beltStackSign)
+                                : (layerType === 'belt2' ? -state.beltStackSign : state.beltStackSign);
                             evaluateCordStressAndColor(layerType, info.psi, s, info.footprintProximity, cordSign, tmpCol);
                             if (state.cordContrast) {
                                 tmpCol.multiplyScalar(0.28);
@@ -2488,7 +2492,7 @@
                 {
                     lines: belt1CordLines,
                     visible: state.showBelt1,
-                    sign: +1 * state.beltStackSign,
+                    sign: -1 * state.beltStackSign,
                     offset: 0.046 + 0.006,
                     radius: 4.82,
                     halfWidth: 1.15,
@@ -2672,9 +2676,12 @@
                 evaluateDeformedTirePoint(Math.PI / 2, 0, OFFSET_BELT2 + 0.025, crownPt);
                 crownProtractorGroup.position.copy(crownPt);
 
-                const betaRad = THREE.MathUtils.degToRad(state.beta);
-                const dirB1 = new THREE.Vector3(Math.cos(betaRad), 0, state.beltStackSign * Math.sin(betaRad)).normalize();
-                const dirB2 = new THREE.Vector3(Math.cos(betaRad), 0, -state.beltStackSign * Math.sin(betaRad)).normalize();
+                const isTBRProtractor = (activeTireModel === 'tbr');
+                const b1Rad = isTBRProtractor ? THREE.MathUtils.degToRad(50.0) : THREE.MathUtils.degToRad(state.beta);
+                const b1Sign = isTBRProtractor ? -state.beltStackSign : state.beltStackSign;
+                const b2Rad = THREE.MathUtils.degToRad(state.beta);
+                const dirB1 = new THREE.Vector3(Math.cos(b1Rad), 0, b1Sign * Math.sin(b1Rad)).normalize();
+                const dirB2 = new THREE.Vector3(Math.cos(b2Rad), 0, -state.beltStackSign * Math.sin(b2Rad)).normalize();
                 crownProtractorGroup.userData.arrowB1.setDirection(dirB1);
                 crownProtractorGroup.userData.arrowB2.setDirection(dirB2);
             }
@@ -3873,11 +3880,11 @@
                 if (rowB4) rowB4.classList.remove('hidden');
                 document.getElementById('lbl-chk-rim').textContent = '22.5" Commercial Rim (R_rim=286mm)';
                 document.getElementById('lbl-chk-carcass').textContent = '90° Radial Steel Carcass (R_c=476mm)';
-                document.getElementById('lbl-chk-belt1').textContent = 'Belt 1 Breaker / Transition (R_b1=482mm, +50°)';
+                document.getElementById('lbl-chk-belt1').textContent = 'Belt 1 Breaker / Transition (R_b1=482mm, -50°)';
                 document.getElementById('lbl-chk-belt2').textContent = 'Belt 2 Working 1 (R_b2=488mm, -18°)';
                 document.getElementById('lbl-chk-tread').textContent = 'Tread / Sidewall (R_a=506mm)';
 
-                document.getElementById('lbl-sigma-b1').textContent = 'Belt 1 (+50°):';
+                document.getElementById('lbl-sigma-b1').textContent = 'Belt 1 (-50°):';
                 document.getElementById('lbl-sigma-b2').textContent = 'Belt 2 (-18°):';
             } else {
                 if (rowCapply) rowCapply.classList.remove('hidden');

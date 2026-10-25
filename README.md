@@ -47,7 +47,7 @@ An interactive real-time 3D structural mechanics and Finite Element Analysis (FE
 
 The **TIRE-MECH 3D** simulator models the multi-physics behavior of modern radial pneumatic tires in real time across two distinct industry-standard reference vehicle architectures:
 1. **Passenger Car Radial Tire (PLT 225/45 R17):** 2 crossed high-tensile steel belts ($\pm 22^\circ$), circumferential $0^\circ$ nylon spiral cap ply bandage, and 17" cast aluminum alloy wheel. Operating range: $F_z \in [1.0, 8.5]\text{ kN}$, $p_i \in [1.2, 3.6]\text{ bar}$ (Nominal: $F_z = 4.5\text{ kN}, p_i = 2.4\text{ bar}$).
-2. **Commercial Truck & Bus Radial Tire (TBR 315/70 R22.5):** Heavy commercial vehicle tire featuring **4 functional steel belts** ($+50^\circ$ breaker, $-18^\circ / +18^\circ$ working plies, $+18^\circ$ elastic protection ply), **omission of textile cap ply**, and 22.5" 10-stud hub-piloted commercial steel wheel disc. Operating range: $F_z \in [10.0, 50.0]\text{ kN}$, $p_i \in [5.0, 10.0]\text{ bar}$ (Nominal: $F_z = 32.5\text{ kN}, p_i = 8.5\text{ bar}$).
+2. **Commercial Truck & Bus Radial Tire (TBR 315/70 R22.5):** Heavy commercial vehicle tire featuring **4 functional steel belts** ($-50^\circ$ breaker, $-18^\circ / +18^\circ$ working plies, $+18^\circ$ elastic protection ply), **omission of textile cap ply**, and 22.5" 10-stud hub-piloted commercial steel wheel disc. Operating range: $F_z \in [10.0, 50.0]\text{ kN}$, $p_i \in [5.0, 10.0]\text{ bar}$ (Nominal: $F_z = 32.5\text{ kN}, p_i = 8.5\text{ bar}$).
 
 The simulation couples carcass inflation mechanics, multi-ply interlaminar belt edge shear, laminate-induced ply steer, 3D brush contact mechanics with frictional slip transitions, and rolling kinematics inside a single zero-dependency HTML5 application.
 
@@ -162,7 +162,7 @@ The contact zone (contact patch length $2a$) is discretized using a physical 3D 
 Commercial vehicle truck and bus radial (TBR) tires operate under significantly higher mechanical loads ($F_z = 30 - 50\text{ kN}$), severe inflation pressures ($p_i = 7 - 10\text{ bar}$), and harsh road contact conditions compared to passenger car tires. To sustain these demanding structural duty cycles, the 315/70 R22.5 tire employs an authentic **4-belt all-steel crown package** and specific commercial design principles:
 
 #### 1. The 4-Belt Steel Package Architecture:
-1. **Belt 1 (Breaker / Transition Ply, $+50^\circ$ at $R_{b1} = 482\text{ mm}$):**
+1. **Belt 1 (Breaker / Transition Ply, $-50^\circ$ at $R_{b1} = 482\text{ mm}$):**
    - A wide, steep-angle steel cord layer that serves as an elastomeric mechanical transition between the flexible single-ply $90^\circ$ radial steel carcass and the rigid working belt package.
    - Mitigates inter-ply stress concentrations, resists crown puncture penetration from road debris, and reduces radial shear strain at the carcass crown apex.
 2. **Belt 2 (Inner Working Ply, $-18^\circ$ at $R_{b2} = 488\text{ mm}$):**
@@ -202,7 +202,7 @@ Unlike passenger car tires (PLT), commercial truck tires intentionally **omit th
 | **Nominal Deflection ($f_z$)** | $24.2\text{ mm}$ | $30.1\text{ mm}$ | Static rim drop under rated load |
 | **Contact Length ($2a$)** | $148\text{ mm}$ | $264\text{ mm}$ | Contact footprint length |
 | **Belt Plies Count** | 2 Steel Belts | 4 Steel Belts | Breaker, working, and protection hierarchy |
-| **Belt Crown Angles** | $\pm 22.0^\circ$ (Adjustable) | $+50^\circ, -18^\circ, +18^\circ, +18^\circ$ | Cord orientation and triangulation lattice |
+| **Belt Crown Angles** | $\pm 22.0^\circ$ (Adjustable) | $-50^\circ, -18^\circ, +18^\circ, +18^\circ$ | Cord orientation and triangulation lattice |
 | **Cap Ply Bandage** | $0^\circ$ Spiral Nylon Bandage | **None (Omitted)** | High-speed centrifugal vs. heavy load thermal design |
 | **Cornering Peak ($C_{\alpha,\text{peak}}$)**| $64.5\text{ kN/rad}$ ($1126\text{ N/deg}$) | $255.0\text{ kN/rad}$ ($4451\text{ N/deg}$) | Vehicle steering and lateral handling response |
 | **Wheel Construction** | 5-Spoke Alloy Rim | 10-Hole Steel Commercial Disc | Rim stiffness and heat dissipation |
@@ -439,7 +439,7 @@ A dedicated segmented switch control in the application header allows instant, s
   - Parameter bounds: Vertical load $F_z \in [1.0, 8.5]\text{ kN}$, inflation pressure $p_i \in [1.2, 3.6]\text{ bar}$, belt angle $\beta \in [15^\circ, 32^\circ]$.
   - Nominal baseline: $F_z = 4.5\text{ kN}, p_i = 2.4\text{ bar}, \beta = 22.0^\circ$.
 - **TBR (Commercial Truck & Bus Radial, 315/70 R22.5):**
-  - Heavy commercial vehicle architecture with 4 functional steel belts ($+50^\circ, -18^\circ, +18^\circ, +18^\circ$) and intentional omission of the textile cap ply bandage.
+  - Heavy commercial vehicle architecture with 4 functional steel belts ($-50^\circ, -18^\circ, +18^\circ, +18^\circ$) and intentional omission of the textile cap ply bandage.
   - Procedural 22.5" 10-hole heavy commercial steel wheel disc with hub bore and lug nuts on a $335\text{ mm}$ PCD per ISO 4107.
   - Parameter bounds: Vertical load $F_z \in [10.0, 50.0]\text{ kN}$, inflation pressure $p_i \in [5.0, 10.0]\text{ bar}$, working belt angle $\beta \in [14^\circ, 25^\circ]$.
   - Nominal baseline: $F_z = 32.5\text{ kN}, p_i = 8.5\text{ bar}, \beta = 18.0^\circ$.
