@@ -680,6 +680,20 @@
                             <span>Street</span>
                         </label>
                     </div>
+
+                    <!-- Component Rubber/Mesh Transparency Slider -->
+                    <div class="pt-1.5 border-t border-slate-800/80 space-y-0.5">
+                        <div class="flex justify-between text-xs">
+                            <label class="text-slate-300 font-medium">Layer Transparency</label>
+                            <span id="val-transparency" class="mono font-semibold text-sky-300">0% (Solid)</span>
+                        </div>
+                        <input id="slider-transparency" type="range" min="0" max="100" step="5" value="0" class="accent-sky-400 w-full cursor-pointer">
+                        <div class="flex justify-between text-[9px] text-slate-500">
+                            <span>0% (Solid)</span>
+                            <span>50% (Ghost)</span>
+                            <span>100% (X-Ray Cords)</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Dynamic Cord Tension Color Mapping Selector & FEA Legend -->
@@ -1005,6 +1019,7 @@
             showCutaway: true,
             showProtractor: true,
             showRoad: true,
+            componentTransparency: 0,    // 0%: Solid opaque rubber, 100%: Complete X-Ray transparency exposing cords
 
             // Unified rotation variable [rad] for both rim and tire material
             rollPhase: 0,
@@ -1947,6 +1962,10 @@
                 metalness: 0.08
             });
             tireGroup.add(treadMesh);
+
+            [carcassMesh, belt1Mesh, belt2Mesh, belt3Mesh, belt4Mesh, capPlyMesh, treadMesh].forEach(m => {
+                if (m) m.renderOrder = 1;
+            });
         }
 
         function createRimAndBeadCoresWithSyncMarkers() {
@@ -2184,6 +2203,10 @@
             treadLugMarkers = new THREE.LineSegments(lugGeo, new THREE.LineBasicMaterial({ color: 0x64748b, transparent: true, opacity: 0.75 }));
             treadLugMarkers.userData = { numLugs: numTreadLugs };
             tireGroup.add(treadLugMarkers);
+
+            [carcassCordLines, belt1CordLines, belt2CordLines, belt3CordLines, belt4CordLines, capPlyCordLines].forEach(c => {
+                if (c) c.renderOrder = 3;
+            });
         }
 
         function createCrownProtractorOverlay() {
@@ -3229,6 +3252,15 @@
             document.getElementById('val-kappa').textContent = `${state.kappa >= 0 ? '+' : ''}${state.kappa.toFixed(1)} %`;
             document.getElementById('val-beta').textContent = `±${state.beta.toFixed(1)}°`;
             document.getElementById('val-speed').textContent = `${state.speed.toFixed(0)} km/h`;
+            const transEl = document.getElementById('val-transparency');
+            if (transEl) {
+                const tVal = Math.round(state.componentTransparency || 0);
+                let desc = 'Solid';
+                if (tVal >= 90) desc = 'X-Ray';
+                else if (tVal >= 50) desc = 'Ghost';
+                else if (tVal > 0) desc = 'Translucent';
+                transEl.textContent = `${tVal}% (${desc})`;
+            }
 
             document.getElementById('out-fz-defl').textContent = state.fz_mm.toFixed(1);
             document.getElementById('out-2a').textContent = Math.round(state.halfLength_a * 200);
@@ -3342,6 +3374,40 @@
             });
 
             applyMaterialAndLightingPreset(presetName);
+        }
+
+        function applyComponentTransparency() {
+            const trans = (state.componentTransparency || 0) / 100;
+            const alpha = Math.max(0.0, 1.0 - trans);
+            const isTrans = trans > 0.01;
+
+            const compMeshes = [
+                { mesh: carcassMesh, baseOpacity: 1.0 },
+                { mesh: belt1Mesh,   baseOpacity: 1.0 },
+                { mesh: belt2Mesh,   baseOpacity: 1.0 },
+                { mesh: belt3Mesh,   baseOpacity: 1.0 },
+                { mesh: belt4Mesh,   baseOpacity: 1.0 },
+                { mesh: capPlyMesh,  baseOpacity: 0.85 },
+                { mesh: treadMesh,   baseOpacity: 1.0 }
+            ];
+
+            compMeshes.forEach(({ mesh, baseOpacity }) => {
+                if (!mesh || !mesh.material) return;
+                if (isTrans) {
+                    mesh.material.transparent = true;
+                    mesh.material.opacity = baseOpacity * alpha;
+                    mesh.material.depthWrite = (alpha > 0.88);
+                } else {
+                    mesh.material.transparent = (mesh === capPlyMesh);
+                    mesh.material.opacity = baseOpacity;
+                    mesh.material.depthWrite = true;
+                }
+            });
+
+            if (treadLugMarkers && treadLugMarkers.material) {
+                treadLugMarkers.material.transparent = true;
+                treadLugMarkers.material.opacity = isTrans ? (0.75 * alpha) : 0.75;
+            }
         }
 
         function applyMaterialAndLightingPreset(presetName) {
@@ -3633,6 +3699,8 @@
                 }
             }
 
+            applyComponentTransparency();
+
             [carcassMesh, belt1Mesh, belt2Mesh, belt3Mesh, belt4Mesh, capPlyMesh, treadMesh].forEach(m => {
                 if (m && m.material) m.material.needsUpdate = true;
             });
@@ -3799,6 +3867,7 @@
         function setTireModel(modelId) {
             if (modelId !== 'plt' && modelId !== 'tbr') return;
             activeTireModel = modelId;
+            window.activeTireModel = modelId;
             const spec = TIRE_SPECS[modelId];
 
             // 1. Toggle Model Switcher Buttons
@@ -3920,9 +3989,13 @@
             state.alpha = 4.0;
             state.kappa = 0.0;
             state.speed = 30;
+            state.componentTransparency = 0;
             document.getElementById('slider-alpha').value = 4.0;
             document.getElementById('slider-kappa').value = 0.0;
             document.getElementById('slider-speed').value = 30;
+            if (document.getElementById('slider-transparency')) {
+                document.getElementById('slider-transparency').value = 0;
+            }
 
             ['chk-rim', 'chk-carcass', 'chk-belt1', 'chk-belt2', 'chk-belt3', 'chk-belt4', 'chk-capply', 'chk-tread', 'chk-cutaway', 'chk-protractor', 'chk-road', 'chk-cord-contrast'].forEach(id => {
                 const el = document.getElementById(id);
@@ -3942,6 +4015,9 @@
             state.kappa = parseFloat(document.getElementById('slider-kappa').value);
             state.beta = parseFloat(document.getElementById('slider-beta').value);
             state.speed = parseFloat(document.getElementById('slider-speed').value);
+            if (document.getElementById('slider-transparency')) {
+                state.componentTransparency = parseFloat(document.getElementById('slider-transparency').value);
+            }
 
             state.showRim = document.getElementById('chk-rim').checked;
             state.showCarcass = document.getElementById('chk-carcass').checked;
@@ -3962,8 +4038,9 @@
             applyMaterialAndLightingPreset(state.shadingPreset);
         }
 
-        ['slider-fz', 'slider-pi', 'slider-alpha', 'slider-kappa', 'slider-beta', 'slider-speed'].forEach(id => {
-            document.getElementById(id).addEventListener('input', handleInputChange);
+        ['slider-fz', 'slider-pi', 'slider-alpha', 'slider-kappa', 'slider-beta', 'slider-speed', 'slider-transparency'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', handleInputChange);
         });
         ['chk-rim', 'chk-carcass', 'chk-belt1', 'chk-belt2', 'chk-belt3', 'chk-belt4', 'chk-capply', 'chk-tread', 'chk-cutaway', 'chk-protractor', 'chk-road', 'chk-cord-contrast'].forEach(id => {
             const el = document.getElementById(id);
@@ -4036,6 +4113,13 @@
             window.roadGlassMesh = roadGlassMesh;
             window.tireGroup = tireGroup;
             window.rimGroup = rimGroup;
+            window.belt1CordLines = belt1CordLines;
+            window.belt2CordLines = belt2CordLines;
+            window.belt3CordLines = belt3CordLines;
+            window.belt4CordLines = belt4CordLines;
+            window.carcassCordLines = carcassCordLines;
+            window.capPlyCordLines = capPlyCordLines;
+            window.activeTireModel = activeTireModel;
             window.setTireModel = setTireModel;
         };
     </script>

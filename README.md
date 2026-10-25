@@ -407,6 +407,11 @@ An automated parameter sweep across 810 permutations:
 
 ### 8.5 Structural Layer Cutaway Toggles & Color Mapping Modes
 - **Individual Layer Checkboxes:** Rim/Bead, 90° Carcass, Belt Ply 1, Belt Ply 2, Belt Ply 3 (TBR), Belt Ply 4 (TBR), 0° Cap Ply (PLT), Tread/Sidewall, Stepped Cutaway, Protractor Overlay (±β & α), and Street Surface / Grid.
+- **Layer & Component Transparency Slider:** A real-time slider (0% to 100%, step: 5%) controls the translucency of all toroidal rubber and composite surface meshes (`treadMesh`, `carcassMesh`, `belt1Mesh`–`belt4Mesh`, `capPlyMesh`):
+  - **0% (Solid):** Normal opaque CAE finish.
+  - **25% - 75% (Translucent / Ghost):** Semi-transparent rubber matrix allowing simultaneous inspection of outer profile shape and internal steel cord trajectory.
+  - **100% (X-Ray Cords):** Rubber meshes become fully see-through, rendering an unobstructed 360° X-ray skeleton of all internal cord reinforcements (`carcassCordLines`, `belt1CordLines`–`belt4CordLines`, `capPlyCordLines`).
+  - **Optical Sorting Architecture:** Employs dynamic depth-write deactivation (`depthWrite = false`) and Three.js render ordering (`renderOrder = 3` for cord lines vs `renderOrder = 1` for rubber meshes) to eliminate z-fighting and depth-clipping artifacts from all camera angles.
 - **Street / Ground Plane Transparency:** The solid street plane is rendered completely transparent (`opacity = 0`, hidden), allowing unobstructed bottom-up inspection of contact patch shear and bristle kinematics, while a subtle reference road grid remains slightly visible (`opacity = 0.20`). The ground grid and flow lines can be toggled on/off via the `Street` checkbox.
 - **Color Mapping Modes:**
   - `σ_c Absolute`: Total cord tensile stress [MPa].
