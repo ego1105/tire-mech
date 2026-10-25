@@ -1,0 +1,2756 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIRE-FEA 3D // Structural, Belt, Ply-Steer & Contact Mechanics of Radial Tires</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js r128 & OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-panel: rgba(10, 15, 25, 0.90);
+            --border-tech: rgba(56, 189, 248, 0.25);
+        }
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #050811;
+            font-family: 'Inter', sans-serif;
+            color: #e2e8f0;
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(56, 189, 248, 0.35);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(56, 189, 248, 0.65);
+        }
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #1e293b;
+            border-radius: 4px;
+            outline: none;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #38bdf8;
+            border: 2px solid #0f172a;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(56, 189, 248, 0.85);
+            transition: transform 0.1s ease, background-color 0.15s ease;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background: #7dd3fc;
+        }
+        .cae-panel {
+            background: var(--bg-panel);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-tech);
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.78), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+        }
+        .mode-btn.active {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.32), rgba(37, 99, 235, 0.42));
+            border-color: #38bdf8;
+            color: #ffffff;
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
+        }
+        .cam-btn.active {
+            background: rgba(56, 189, 248, 0.22);
+            border-color: #38bdf8;
+            color: #38bdf8;
+        }
+        .sub-btn.active {
+            background: rgba(245, 158, 11, 0.25);
+            border-color: #fbbf24;
+            color: #fde68a;
+        }
+        .jet-gradient {
+            background: linear-gradient(90deg, #00008b 0%, #0066ff 20%, #00ffff 40%, #00ff66 60%, #ffff00 80%, #ff0000 100%);
+        }
+        #canvas-container {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+        }
+        .hud-layer {
+            position: relative;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .hud-interactive {
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col justify-between">
+
+    <!-- 3D WebGL Viewport -->
+    <div id="canvas-container"></div>
+
+    <!-- TOP BAR: BRANDING, 3 ENGINEERING MODES & CAMERA QUICK-SELECT -->
+    <header class="hud-layer w-full px-3 pt-2.5 flex flex-wrap items-center justify-between gap-2">
+        <!-- Brand & Tire Spec -->
+        <div class="cae-panel hud-interactive px-3 py-2 rounded-xl flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-sky-500/20 border border-sky-400/50 flex items-center justify-center text-sky-400 font-bold mono text-xs shadow-inner">
+                FEA
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-xs sm:text-sm font-bold tracking-wider uppercase text-white">TIRE-MECH 3D</h1>
+                    <span class="text-[10px] mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">225/45 R17</span>
+                </div>
+                <p class="text-[10px] text-slate-400 hidden md:block">Yaw Slip Angle α • Belt Radii R_b1 &lt; R_b2 • True ±β Angle • Ply Steer</p>
+            </div>
+        </div>
+
+        <!-- 3 Switchable Engineering Modes -->
+        <div class="cae-panel hud-interactive p-1 rounded-xl flex flex-wrap items-center gap-1">
+            <button id="mode-1" onclick="setMode(1)" class="mode-btn active px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-transparent transition-all flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+                <span>1. Load Paths & Catenary Effect</span>
+            </button>
+            <button id="mode-2" onclick="setMode(2)" class="mode-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-transparent text-slate-300 hover:text-white transition-all flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                <span>2. Belt Mechanics, ±β Angle & Ply Steer</span>
+            </button>
+            <button id="mode-3" onclick="setMode(3)" class="mode-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-transparent text-slate-300 hover:text-white transition-all flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+                <span>3. Contact Mechanics & 3D Brush Model</span>
+            </button>
+        </div>
+
+        <!-- Camera Quick-Select Buttons -->
+        <div class="cae-panel hud-interactive px-2.5 py-1.5 rounded-xl flex items-center gap-1 flex-wrap">
+            <span class="text-[10px] uppercase tracking-wider text-slate-400 mr-1 hidden xl:inline">Camera:</span>
+            <button onclick="setCameraPreset('iso')" id="cam-iso" class="cam-btn active px-2 py-1 rounded-lg text-[11px] font-medium border border-slate-700/80 text-slate-300 hover:border-sky-400 transition">3D Cutaway</button>
+            <button onclick="setCameraPreset('yaw')" id="cam-yaw" class="cam-btn px-2 py-1 rounded-lg text-[11px] font-medium border border-slate-700/80 text-slate-300 hover:border-sky-400 transition">Slip Angle α (Yaw Axis)</button>
+            <button onclick="setCameraPreset('crown')" id="cam-crown" class="cam-btn px-2 py-1 rounded-lg text-[11px] font-medium border border-slate-700/80 text-slate-300 hover:border-sky-400 transition">Crown (±β Angle)</button>
+            <button onclick="setCameraPreset('belt')" id="cam-belt" class="cam-btn px-2 py-1 rounded-lg text-[11px] font-medium border border-slate-700/80 text-slate-300 hover:border-sky-400 transition">Belt Radii R_b1/R_b2</button>
+            <button onclick="setCameraPreset('side')" id="cam-side" class="cam-btn px-2 py-1 rounded-lg text-[11px] font-medium border border-slate-700/80 text-slate-300 hover:border-sky-400 transition">Side View (Sync)</button>
+            <button onclick="setCameraPreset('bottom')" id="cam-bottom" class="cam-btn px-2 py-1 rounded-lg text-[11px] font-medium border border-slate-700/80 text-slate-300 hover:border-sky-400 transition">Contact Patch (Bottom)</button>
+        </div>
+    </header>
+
+    <!-- MAIN WORKSPACE OVERLAY: LEFT CONTROLS & RIGHT TELEMETRY + 2D PLOT -->
+    <div class="hud-layer flex-1 flex justify-between items-stretch px-3 py-2 overflow-hidden gap-3">
+
+        <!-- LEFT PANEL: SLIDERS, PLY STEER CONTROLS & INDIVIDUAL LAYER VISIBILITY -->
+        <aside class="cae-panel hud-interactive w-76 sm:w-84 rounded-xl p-3 flex flex-col justify-between overflow-y-auto max-h-full">
+            <div class="space-y-2.5">
+                <div class="flex items-center justify-between border-b border-slate-700/70 pb-1.5">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-sky-400">Operating & Belt Parameters</h2>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="setAlphaZeroPlySteerTest()" class="text-[10px] mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition" title="Sets α = 0° for isolated observation of Ply Steer">α=0°</button>
+                        <button onclick="setAlphaDemoYawTest()" class="text-[10px] mono px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/40 hover:bg-sky-500/30 transition" title="Sets α = +6° to demonstrate yaw rotation">α=+6°</button>
+                        <button onclick="resetParameters()" class="text-[10px] mono text-slate-400 hover:text-sky-300 underline">Reset</button>
+                    </div>
+                </div>
+
+                <!-- Vertikallast F_z -->
+                <div class="space-y-0.5">
+                    <div class="flex justify-between text-xs">
+                        <label class="text-slate-300 font-medium">Vertical Load <span class="mono text-sky-300">F_z</span></label>
+                        <span id="val-fz" class="mono font-semibold text-white">4.50 kN</span>
+                    </div>
+                    <input id="slider-fz" type="range" min="1.0" max="8.5" step="0.1" value="4.5">
+                </div>
+
+                <!-- Innendruck p_i -->
+                <div class="space-y-0.5">
+                    <div class="flex justify-between text-xs">
+                        <label class="text-slate-300 font-medium">Inflation Pressure <span class="mono text-sky-300">p_i</span></label>
+                        <span id="val-pi" class="mono font-semibold text-white">2.40 bar</span>
+                    </div>
+                    <input id="slider-pi" type="range" min="1.2" max="3.6" step="0.05" value="2.4">
+                </div>
+
+                <!-- Schräglaufwinkel alpha (Rotates Rim & Tire around Vertical Axis!) -->
+                <div class="space-y-0.5 bg-sky-950/30 border border-sky-500/30 rounded-lg p-1.5">
+                    <div class="flex justify-between text-xs">
+                        <label class="text-sky-200 font-semibold">Slip Angle <span class="mono text-sky-400">α (Yaw Axis)</span></label>
+                        <span id="val-alpha" class="mono font-bold text-sky-300">+4.0°</span>
+                    </div>
+                    <input id="slider-alpha" type="range" min="-12.0" max="12.0" step="0.2" value="4.0">
+                    <div class="flex justify-between text-[9px] text-slate-400">
+                        <span>-12° (Right)</span>
+                        <span class="text-amber-300/90">0° (Ply Steer)</span>
+                        <span>+12° (Left)</span>
+                    </div>
+                </div>
+
+                <!-- Längsschlupf kappa (Torsions-Wind-Up, Gürtelversatz & Stauchungswulst) -->
+                <div class="space-y-1 bg-emerald-950/25 border border-emerald-500/30 rounded-lg p-1.5">
+                    <div class="flex justify-between text-xs">
+                        <label class="text-emerald-200 font-semibold">Longitudinal Slip <span class="mono text-emerald-400">κ (Torsion & Shear)</span></label>
+                        <span id="val-kappa" class="mono font-bold text-emerald-300">0.0 %</span>
+                    </div>
+                    <input id="slider-kappa" type="range" min="-12.0" max="12.0" step="0.5" value="0.0">
+                    <div class="grid grid-cols-3 gap-1 pt-0.5">
+                        <button onclick="setKappaQuickTest(-12.0)" class="text-[9px] mono py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30 transition" title="Full braking: rearward belt shift, trailing-edge compression bulge">Braking (-12%)</button>
+                        <button onclick="setKappaQuickTest(0.0)" class="text-[9px] mono py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 transition" title="Free rolling wheel without longitudinal slip">Free (0%)</button>
+                        <button onclick="setKappaQuickTest(12.0)" class="text-[9px] mono py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 transition" title="Traction/Drive: forward belt shift, leading-edge compression bulge">Traction (+12%)</button>
+                    </div>
+                </div>
+
+                <!-- Gürtelwinkel +/- beta_0 -->
+                <div class="space-y-0.5">
+                    <div class="flex justify-between text-xs">
+                        <label class="text-slate-300 font-medium">Crown Belt Angle <span class="mono text-sky-300">±β_0</span></label>
+                        <span id="val-beta" class="mono font-semibold text-amber-300">±22.0°</span>
+                    </div>
+                    <input id="slider-beta" type="range" min="15.0" max="32.0" step="0.5" value="22.0">
+                    <div class="flex justify-between text-[9px] text-slate-500">
+                        <span>15° (Flat/Stiff)</span>
+                        <span>22° (Passenger Car OE)</span>
+                        <span>32° (Comfort)</span>
+                    </div>
+                </div>
+
+                <!-- Rollgeschwindigkeit v -->
+                <div class="space-y-0.5">
+                    <div class="flex justify-between text-xs">
+                        <label class="text-slate-300 font-medium">Rolling Speed <span class="mono text-sky-300">v</span></label>
+                        <span id="val-speed" class="mono font-semibold text-emerald-400">30 km/h</span>
+                    </div>
+                    <input id="slider-speed" type="range" min="0" max="100" step="5" value="30">
+                </div>
+
+                <!-- Belt Stacking & Ply Steer Controls -->
+                <div class="pt-2 border-t border-slate-700/70 space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-amber-400">Belt Ply Stacking & Ply Steer</span>
+                        <span class="text-[9px] mono text-slate-400">R_b1 &lt; R_b2</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-1">
+                        <button id="stack-pos" onclick="setBeltStackOrder(1)" class="sub-btn active px-2 py-1 rounded text-[10px] mono border border-slate-700 text-slate-300 transition">
+                            R_b1:+β / R_b2:-β
+                        </button>
+                        <button id="stack-neg" onclick="setBeltStackOrder(-1)" class="sub-btn px-2 py-1 rounded text-[10px] mono border border-slate-700 text-slate-300 transition">
+                            R_b1:-β / R_b2:+β
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between text-[11px] pt-0.5">
+                        <span class="text-slate-300">Ply Steer Deformation Magnifier:</span>
+                        <div class="flex gap-1">
+                            <button id="ps-mag-1" onclick="setPlySteerMag(1)" class="px-1.5 py-0.5 rounded text-[10px] mono border border-slate-700 bg-slate-800 text-slate-300">1x</button>
+                            <button id="ps-mag-6" onclick="setPlySteerMag(6)" class="sub-btn active px-1.5 py-0.5 rounded text-[10px] mono border border-slate-700 text-slate-300">6x (FEA Zoom)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Individually Toggleable Tire Structural Layers -->
+                <div class="pt-2 border-t border-slate-700/70 space-y-1.2">
+                    <h3 class="text-[11px] font-bold uppercase tracking-wider text-sky-400 mb-1">3D Stepped Cutaway & Radii</h3>
+
+                    <label class="flex items-center justify-between text-xs cursor-pointer py-0.5">
+                        <span class="flex items-center gap-1.5 text-slate-200">
+                            <span class="w-2.5 h-2.5 rounded-sm bg-yellow-400 inline-block"></span>
+                            Rim, Bead & Sync Markers
+                        </span>
+                        <input id="chk-rim" type="checkbox" checked class="accent-sky-400 w-3.5 h-3.5 rounded cursor-pointer">
+                    </label>
+
+                    <label class="flex items-center justify-between text-xs cursor-pointer py-0.5">
+                        <span class="flex items-center gap-1.5 text-slate-200">
+                            <span class="w-2.5 h-2.5 rounded-sm bg-rose-500 inline-block"></span>
+                            90° Radial Carcass (R_c=298mm)
+                        </span>
+                        <input id="chk-carcass" type="checkbox" checked class="accent-sky-400 w-3.5 h-3.5 rounded cursor-pointer">
+                    </label>
+
+                    <label class="flex items-center justify-between text-xs cursor-pointer py-0.5">
+                        <span class="flex items-center gap-1.5 text-slate-200">
+                            <span class="w-2.5 h-2.5 rounded-sm bg-amber-400 inline-block"></span>
+                            Belt Ply 1 Inner (R_b1=303mm, W=192)
+                        </span>
+                        <input id="chk-belt1" type="checkbox" checked class="accent-sky-400 w-3.5 h-3.5 rounded cursor-pointer">
+                    </label>
+
+                    <label class="flex items-center justify-between text-xs cursor-pointer py-0.5">
+                        <span class="flex items-center gap-1.5 text-slate-200">
+                            <span class="w-2.5 h-2.5 rounded-sm bg-sky-400 inline-block"></span>
+                            Belt Ply 2 Outer (R_b2=308mm, W=170)
+                        </span>
+                        <input id="chk-belt2" type="checkbox" checked class="accent-sky-400 w-3.5 h-3.5 rounded cursor-pointer">
+                    </label>
+
+                    <label class="flex items-center justify-between text-xs cursor-pointer py-0.5">
+                        <span class="flex items-center gap-1.5 text-slate-200">
+                            <span class="w-2.5 h-2.5 rounded-sm bg-cyan-400 inline-block"></span>
+                            0° Cap Ply Bandage (R_cap=311mm)
+                        </span>
+                        <input id="chk-capply" type="checkbox" checked class="accent-sky-400 w-3.5 h-3.5 rounded cursor-pointer">
+                    </label>
+
+                    <label class="flex items-center justify-between text-xs cursor-pointer py-0.5">
+                        <span class="flex items-center gap-1.5 text-slate-200">
+                            <span class="w-2.5 h-2.5 rounded-sm bg-slate-400 inline-block"></span>
+                            Tread / Sidewall (R_a=316mm)
+                        </span>
+                        <input id="chk-tread" type="checkbox" checked class="accent-sky-400 w-3.5 h-3.5 rounded cursor-pointer">
+                    </label>
+
+                    <div class="pt-1 border-t border-slate-800/90 grid grid-cols-2 gap-1 text-[11px]">
+                        <label class="flex items-center gap-1.5 cursor-pointer text-slate-300">
+                            <input id="chk-cutaway" type="checkbox" checked class="accent-sky-400 w-3.5 h-3.5 rounded cursor-pointer">
+                            <span>Stepped Cutaway</span>
+                        </label>
+                        <label class="flex items-center gap-1.5 cursor-pointer text-amber-300">
+                            <input id="chk-protractor" type="checkbox" checked class="accent-amber-400 w-3.5 h-3.5 rounded cursor-pointer">
+                            <span>±β & α Angles</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Dynamic Cord Tension Color Mapping Selector & FEA Legend -->
+                <div class="pt-2 border-t border-slate-700/70 space-y-1.5">
+                    <div class="flex justify-between items-center text-[11px]">
+                        <span class="font-bold uppercase tracking-wider text-sky-400">Cord Tension Color Mapping</span>
+                        <label class="flex items-center gap-1 text-[10px] text-slate-300 cursor-pointer" title="Darkens the rubber matrix so FEA colors of individual cords stand out">
+                            <input id="chk-cord-contrast" type="checkbox" checked class="accent-sky-400 w-3 h-3 rounded cursor-pointer">
+                            <span>Cord Contrast</span>
+                        </label>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-1">
+                        <button id="cmap-abs" onclick="setCordColorMode('abs')" class="sub-btn active px-1.5 py-1 rounded text-[10px] mono border border-slate-700 text-slate-300 transition" title="Absolute cord tensile stress σ_c [MPa] from inflation pressure, wheel load, belt bending, and slip angle">
+                            σ_c Absolute
+                        </button>
+                        <button id="cmap-delta" onclick="setCordColorMode('delta')" class="sub-btn px-1.5 py-1 rounded text-[10px] mono border border-slate-700 text-slate-300 transition" title="Dynamic stress change Δσ_c = σ_c - σ_0 from footprint flattening, truss effect, and ply steer">
+                            Δσ_c Dynamic
+                        </button>
+                        <button id="cmap-layer" onclick="setCordColorMode('layer')" class="sub-btn px-1.5 py-1 rounded text-[10px] mono border border-slate-700 text-slate-300 transition" title="Classic component colors for geometry identification">
+                            Components
+                        </button>
+                    </div>
+
+                    <div class="flex justify-between items-center text-[10px] pt-0.5">
+                        <span id="colorbar-title" class="font-semibold text-slate-200">FEA Cord Stress σ_c (All Layers)</span>
+                        <span id="colorbar-unit" class="mono text-sky-400">MPa</span>
+                    </div>
+                    <div class="h-2.5 w-full rounded-full jet-gradient border border-slate-600 shadow-inner"></div>
+                    <div class="flex justify-between text-[9px] mono text-slate-400">
+                        <span id="colorbar-min">0 MPa (Contact)</span>
+                        <span id="colorbar-mid">120 MPa (p_i)</span>
+                        <span id="colorbar-max">280+ MPa (Tension)</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- RIGHT PANEL: TELEMETRY, PLY STEER KPIs, MODE EXPLANATION & LIVE 2D FEA PLOT -->
+        <aside class="cae-panel hud-interactive w-80 sm:w-96 rounded-xl p-3 flex flex-col justify-between overflow-y-auto max-h-full">
+            <div class="space-y-2">
+                <div class="flex items-center justify-between border-b border-slate-700/70 pb-1.5">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-sky-400">Real-Time Mechanical Telemetry</h2>
+                    <span class="text-[10px] mono text-yellow-300">Cord FEA & 1:1 Sync Active</span>
+                </div>
+
+                <!-- Key Engineering Readouts including Ply Steer, Belt Angles & Cornering Stiffness / Coefficient -->
+                <div class="grid grid-cols-2 gap-1.5">
+                    <div class="bg-slate-900/85 border border-slate-800 rounded-lg p-1.5">
+                        <div class="text-[10px] text-slate-400">Deflection f_z | Contact Length 2a</div>
+                        <div class="mono text-xs font-bold text-white mt-0.5">
+                            <span id="out-fz-defl">24.2</span> mm <span class="text-slate-600">|</span> <span id="out-2a" class="text-sky-400">148</span> mm
+                        </div>
+                    </div>
+                    <div class="bg-slate-900/85 border border-slate-800 rounded-lg p-1.5">
+                        <div class="text-[10px] text-slate-400">Belt Angle Crown → Contact</div>
+                        <div class="mono text-xs font-bold text-cyan-300 mt-0.5">
+                            <span id="out-beta-crown">22.0°</span> → <span id="out-beta-patch" class="text-amber-300">24.4°</span>
+                        </div>
+                    </div>
+                    <div class="bg-slate-900/85 border border-slate-800 rounded-lg p-1.5">
+                        <div class="text-[10px] text-slate-400">Total Lateral Force F_y,tot | F_x</div>
+                        <div class="mono text-xs font-bold text-white mt-0.5">
+                            <span id="out-fy" class="text-amber-400">+3180</span> N <span class="text-slate-600">|</span> <span id="out-fx" class="text-emerald-300">0</span> N
+                        </div>
+                    </div>
+                    <div class="bg-amber-950/35 border border-amber-500/40 rounded-lg p-1.5">
+                        <div class="text-[10px] text-amber-300 font-medium">Ply-Steer F_y,ply (at α=0°)</div>
+                        <div class="mono text-xs font-bold text-amber-300 mt-0.5">
+                            <span id="out-fy-ply">+215</span> N <span class="text-[10px] text-slate-300">(α_ply=<span id="out-alpha-ply">+0.28°</span>)</span>
+                        </div>
+                    </div>
+                    <div class="bg-sky-950/35 border border-sky-500/40 rounded-lg p-1.5">
+                        <div class="text-[10px] text-sky-300 font-medium">Cornering Stiffness C_α (F_z)</div>
+                        <div class="mono text-xs font-bold text-sky-300 mt-0.5">
+                            <span id="out-calpha">1045</span> N/° <span class="text-[9.5px] text-slate-300">(<span id="out-calpha-rad">59.9</span> kN/rad)</span>
+                        </div>
+                    </div>
+                    <div class="bg-rose-950/35 border border-rose-500/40 rounded-lg p-1.5">
+                        <div class="text-[10px] text-rose-300 font-medium">Cornering Coeff. CC_α = C_α/F_z</div>
+                        <div class="mono text-xs font-bold text-rose-300 mt-0.5">
+                            <span id="out-cc-deg">0.232</span> 1/° <span class="text-[9.5px] text-slate-300">(<span id="out-cc-rad">13.3</span> 1/rad)</span>
+                        </div>
+                    </div>
+                    <div class="bg-slate-900/85 border border-slate-800 rounded-lg p-1.5">
+                        <div class="text-[10px] text-slate-400">Self-Aligning Torque M_z | τ_xz</div>
+                        <div class="mono text-xs font-bold text-rose-400 mt-0.5">
+                            <span id="out-mz">-72.4</span> Nm <span class="text-slate-600">|</span> <span id="out-tau-edge" class="text-amber-300">3.42</span> MPa
+                        </div>
+                        <span id="out-np" class="hidden">23</span>
+                    </div>
+                    <div class="bg-emerald-950/30 border border-emerald-500/35 rounded-lg p-1.5">
+                        <div class="text-[10px] text-emerald-300 font-medium">Belt Shift Δx_b | Torsion γ_sw</div>
+                        <div class="mono text-xs font-bold text-emerald-300 mt-0.5">
+                            <span id="out-dx-belt">0.0</span> mm <span class="text-slate-600">|</span> <span id="out-gamma-sw" class="text-cyan-300">0.00°</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Cord Stress Telemetry across all 4 Cord Layers -->
+                <div class="bg-slate-900/90 border border-sky-500/30 rounded-lg p-2 space-y-1">
+                    <div class="flex items-center justify-between text-[10px]">
+                        <span class="font-bold uppercase tracking-wider text-sky-300">Live Cord Stresses σ_c (Min → Peak)</span>
+                        <span id="out-cmap-badge" class="mono text-[9px] px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300">σ_c Absolute</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px] mono">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">90° Carcass:</span>
+                            <span id="out-sigma-carc" class="font-semibold text-cyan-300">6 → 84 MPa</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">0° Cap Ply:</span>
+                            <span id="out-sigma-cap" class="font-semibold text-emerald-300">52 → 148 MPa</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Belt 1 (R_b1):</span>
+                            <span id="out-sigma-b1" class="font-semibold text-amber-300">68 → 215 MPa</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Belt 2 (R_b2):</span>
+                            <span id="out-sigma-b2" class="font-semibold text-rose-300">82 → 264 MPa</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Adhesion vs Sliding Region Ratio Bar -->
+                <div class="bg-slate-900/75 border border-slate-800 rounded-lg p-2 space-y-1">
+                    <div class="flex justify-between text-[10px]">
+                        <span class="text-cyan-400 font-semibold">Adhesion Zone (Leading): <strong id="out-adh-pct" class="mono">68%</strong></span>
+                        <span class="text-rose-400 font-semibold">Sliding Zone (Trailing): <strong id="out-slide-pct" class="mono">32%</strong></span>
+                    </div>
+                    <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden flex">
+                        <div id="bar-adhesion" class="h-full bg-gradient-to-r from-cyan-500 to-emerald-400 transition-all duration-150" style="width: 68%"></div>
+                        <div id="bar-sliding" class="h-full bg-gradient-to-r from-amber-500 to-rose-500 transition-all duration-150" style="width: 32%"></div>
+                    </div>
+                </div>
+
+                <!-- LIVE 2D FEA & CORNERING STIFFNESS PLOT PANEL -->
+                <div class="bg-slate-950/95 border border-slate-800 rounded-lg p-2.5 space-y-1.5">
+                    <div class="flex items-center justify-between gap-1">
+                        <span id="plot-title" class="text-[10.5px] font-semibold text-slate-200 truncate">Characteristics C_α(F_z) & CC_α(F_z)</span>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button id="plot-btn-cornering" onclick="setPlotType('cornering')" class="px-1.5 py-0.5 rounded text-[9px] mono bg-rose-500/25 text-rose-300 border border-rose-500/50 transition" title="Cornering stiffness C_α(F_z) & cornering coefficient CC_α(F_z) with active operating point">C_α & CC_α(F_z)</button>
+                            <button id="plot-btn-contact" onclick="setPlotType('contact')" class="px-1.5 py-0.5 rounded text-[9px] mono bg-slate-800 text-slate-400 border border-slate-700 transition" title="Normal pressure p_z(x) and lateral shear τ_y(x) along contact length">p_z & τ_y(x)</button>
+                            <button id="plot-btn-belt" onclick="setPlotType('belt')" class="px-1.5 py-0.5 rounded text-[9px] mono bg-slate-800 text-slate-400 border border-slate-700 transition" title="Interlaminar edge shear τ_xz(x), pantograph Δβ(x) & ply steer">τ_xz & Δβ</button>
+                        </div>
+                    </div>
+
+                    <div id="plot-legend" class="flex items-center justify-between text-[9px] mono text-slate-400">
+                        <span class="text-sky-400">━ C_α(F_z) [N/deg]</span>
+                        <span class="text-rose-400">━ CC_α=C_α/F_z [1/deg]</span>
+                        <span class="text-amber-300">● Operating Point (F_z, p_i)</span>
+                    </div>
+
+                    <canvas id="fea-plot" width="340" height="148" class="w-full h-34 rounded bg-slate-950 border border-slate-800/80"></canvas>
+
+                    <div id="plot-xaxis" class="flex justify-between text-[9px] mono text-slate-400 px-1">
+                        <span>F_z = 1.0 kN (Light Load)</span>
+                        <span>Nominal Load (4.5 kN)</span>
+                        <span>F_z = 8.5 kN (Degression)</span>
+                    </div>
+                </div>
+
+                <!-- Dynamic Engineering Explanation Panel -->
+                <div class="bg-sky-950/35 border border-sky-500/30 rounded-lg p-2.5 space-y-1">
+                    <div class="text-[11px] font-bold text-sky-300" id="explain-title">
+                        Mechanics Focus: Cornering Stiffness C_α(F_z) & Cornering Coefficient CC_α
+                    </div>
+                    <p class="text-[10.5px] text-slate-300 leading-relaxed" id="explain-body">
+                        <strong>1. Cornering Stiffness C_α(F_z):</strong> Initially rises with wheel load <span class="mono">F_z</span> (enlarged contact length <span class="mono">2a</span>), but saturates at high loads due to carcass/belt lateral compliance (Pacejka sine law).<br>
+                        <strong>2. Cornering Coefficient CC_α = C_α / F_z:</strong> Decreases monotonically with increasing wheel load (tire load degressivity — critical for understeer/oversteer under lateral load transfer!).
+                    </p>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- BOTTOM NAVIGATION BAR -->
+    <footer class="hud-layer w-full px-3 pb-2 flex justify-center pointer-events-none">
+        <div class="cae-panel px-4 py-1 rounded-full text-[11px] text-slate-400 flex items-center gap-3.5 flex-wrap justify-center">
+            <span><strong class="text-sky-400">Left-Click + Drag:</strong> Rotate 3D View</span>
+            <span class="hidden sm:inline"><strong class="text-emerald-400">Green Arrow v⃗ (+X):</strong> Driving Direction</span>
+            <span><strong class="text-amber-400">Yellow Arc α:</strong> Yaw Slip Angle (around +Z)</span>
+            <span class="hidden md:inline text-slate-400 font-mono text-[10px] border-l border-slate-700 pl-3">
+                <span class="text-slate-300 font-semibold">ISO 8855:</span>
+                <span class="text-emerald-400 font-bold">+X</span> Driving •
+                <span class="text-amber-400 font-bold">+Y</span> Lateral (Rotation Axis) •
+                <span class="text-sky-400 font-bold">+Z</span> Vertical (Yaw Axis)
+            </span>
+        </div>
+    </footer>
+
+    <script>
+        /***********************************************************************
+         * TIRE-FEA 3D: RADIAL TIRE MECHANICS, YAW ROTATION AROUND VERTICAL AXIS,
+         * TRUE ±β BELT GEOMETRY, DISTINCT BELT RADII & PLY STEER
+         ***********************************************************************/
+
+        // Geometric constants (Scale: 1 scene unit = 100 mm = 0.1 m)
+        const R_UNLOADED = 3.16;         // 316 mm outer tread radius (225/45 R17)
+        const R_CARCASS_CROWN = 2.98;    // 298 mm 90° radial carcass crown radius
+        const R_BELT_1 = 3.03;           // 303 mm Inner Steel Belt 1 radius (R_b1)
+        const R_BELT_2 = 3.08;           // 308 mm Outer Steel Belt 2 radius (R_b2 > R_b1)
+        const R_CAP_PLY = 3.11;          // 311 mm 0° Nylon Cap Ply radius
+        const R_RIM = 2.16;              // 216 mm bead seat radius (17 inch rim)
+
+        const TIRE_HALF_WIDTH = 1.125;   // 112.5 mm half section width (W = 225 mm)
+        const BELT1_HALF_WIDTH = 0.96;   // 96 mm Inner Belt 1 half-width (W_b1 = 192 mm)
+        const BELT2_HALF_WIDTH = 0.85;   // 85 mm Outer Belt 2 half-width (W_b2 = 170 mm, stepped!)
+
+        // Layer radial offsets above carcass reference surface
+        const OFFSET_CARCASS = 0.00;
+        const OFFSET_BELT1 = 0.048;      // Inner belt layer at R_b1
+        const OFFSET_INTERPLY = 0.072;   // Elastomer shear layer between Belt 1 and Belt 2
+        const OFFSET_BELT2 = 0.096;      // Outer belt layer at R_b2 (visibly separated radius!)
+        const OFFSET_CAPPLY = 0.122;     // 0° cap ply bandage wrapping belt edges
+        const OFFSET_TREAD = 0.165;      // Outer tread profile
+
+        // Application State
+        const state = {
+            mode: 1,                     // 1: Load Paths, 2: Belt Mechanics & Ply Steer, 3: Brush Model
+            plotType: 'cornering',       // 'cornering', 'contact', or 'belt'
+            cordColorMode: 'abs',        // 'abs': Absolute cord stress [MPa], 'delta': Dynamic change in footprint, 'layer': Component colors
+            cordContrast: true,          // Darken rubber matrix so FEA-colored cords stand out clearly
+            Fz: 4.5,                     // Vertical load [kN]
+            pi: 2.4,                     // Inflation pressure [bar]
+            alpha: 4.0,                  // Slip angle [deg] -> Rotates rim & tire around vertical axis (Hochachse)!
+            kappa: 0.0,                  // Longitudinal slip [%]
+            beta: 22.0,                  // Crown steel belt cord angle [deg] wrt circumferential equator
+            speed: 30.0,                 // Rolling speed [km/h]
+            beltStackSign: 1,            // +1: [Belt1: +beta, Belt2: -beta], -1: [Belt1: -beta, Belt2: +beta]
+            plySteerMag: 6,              // Visual amplification of Ply Steer trajectory skew (1x or 6x)
+
+            // Layer visibilities
+            showRim: true,
+            showCarcass: true,
+            showBelt1: true,
+            showBelt2: true,
+            showCapPly: true,
+            showTread: true,
+            showCutaway: true,
+            showProtractor: true,
+
+            // Unified rotation variable [rad] for both rim and tire material
+            rollPhase: 0,
+            roadFlowOffset: 0,
+
+            // Computed mechanical outputs
+            fz_mm: 24.2,
+            halfLength_a: 0.74,          // Contact patch half-length 'a' [scene units = 100mm]
+            Fy_total: 3180,              // Total lateral force [N]
+            Fy_ply: 215,                 // Ply Steer lateral force at alpha=0° [N]
+            alpha_ply: 0.28,             // Equivalent Ply Steer pseudo-slip angle [deg]
+            Fx: 0,
+            Mz: -72.4,
+            Mz_ply: 4.8,                 // PRAT (Ply Steer Residual Aligning Torque) [Nm]
+            np_mm: 23,
+            tauEdgeMax: 3.42,
+            deltaBeta: 2.40,
+            adhesionPct: 68,
+            dx_belt_mm: 0.0,             // Tangential belt shift relative to rim under longitudinal force F_x [mm]
+            gamma_sw_deg: 0.0,           // Sidewall circumferential torsional wind-up shear angle [deg]
+
+            // Cornering Stiffness & Cornering Coefficient Metrics at current Operating Point
+            C_alpha_deg: 1045,           // Linear Cornering Stiffness C_alpha(Fz, pi, beta, kappa) [N/deg]
+            C_alpha_rad: 59.9,           // Linear Cornering Stiffness [kN/rad]
+            CC_alpha_deg: 0.232,         // Cornering Coefficient CC_alpha = C_alpha / Fz [1/deg]
+            CC_alpha_rad: 13.3,          // Cornering Coefficient [1/rad]
+            C_alpha_secant_deg: 920,     // Effective Secant Cornering Stiffness at current slip angle alpha [N/deg]
+            CC_alpha_secant_deg: 0.204,  // Effective Secant Cornering Coefficient at current slip angle alpha [1/deg]
+
+            // Live Cord Tension Readouts [MPa]
+            sigmaCarcMin: 6,
+            sigmaCarcMax: 84,
+            sigmaBelt1Min: 68,
+            sigmaBelt1Max: 215,
+            sigmaBelt2Min: 82,
+            sigmaBelt2Max: 264,
+            sigmaCapMin: 52,
+            sigmaCapMax: 148
+        };
+
+        // Three.js Globals
+        let scene, camera, renderer, controls;
+        let wheelYawGroup;               // Parent group rotating around vertical Hochachse (Y in Three.js) by slip angle alpha!
+        let tireGroup, rimGroup;
+        let carcassMesh, belt1Mesh, belt2Mesh, capPlyMesh, treadMesh;
+        let carcassCordLines, belt1CordLines, belt2CordLines, capPlyCordLines;
+        let treadLugMarkers, tireBeadSyncMarkers;
+        let beltEdgeShearRibbons, beltCenterlineSkewLine;
+        let crownProtractorGroup;
+        let yawIndicatorGroup, slipSectorMesh, slipArcLine, wheelHeadingLine, verticalAxisHubRing;
+        let roadFlowLines;
+        let mode1VectorsGroup, mode3FootprintGroup;
+        let pressureSurfaceMesh, brushLinesMesh;
+        let forceArrowFz, forceArrowFy, forceArrowFyPly, forceArrowFx, momentArcGroup, trailMarkerMesh;
+
+        const SEG_THETA = 104;
+        const SEG_PHI = 36;
+
+        /***********************************************************************
+         * 1. REAL-TIME TIRE PHYSICS, PANTOGRAPH, BELT RADII & PLY STEER ENGINE
+         ***********************************************************************/
+
+        function getFEAColor(t, targetColor) {
+            t = Math.max(0, Math.min(1, t));
+            const r = Math.max(0, Math.min(1, 1.5 - Math.abs(4 * t - 3)));
+            const g = Math.max(0, Math.min(1, 1.5 - Math.abs(4 * t - 2)));
+            const b = Math.max(0, Math.min(1, 1.5 - Math.abs(4 * t - 1)));
+            if (targetColor) {
+                targetColor.setRGB(r, g, b);
+                return targetColor;
+            }
+            return new THREE.Color(r, g, b);
+        }
+
+        /**
+         * Analytical & Brush-Mechanics-coupled Evaluation of:
+         *  - Cornering Stiffness C_alpha(F_z, p_i, beta_0, kappa) in [N/deg] and [kN/rad]
+         *  - Cornering Coefficient CC_alpha(F_z, p_i, beta_0, kappa) = C_alpha / F_z in [1/deg] and [1/rad]
+         */
+        function evaluateCorneringMetricsAtLoad(Fz_kN, pi_bar, beta_deg, kappa_pct) {
+            const betaRad = THREE.MathUtils.degToRad(beta_deg);
+            const betaRef = THREE.MathUtils.degToRad(22.0);
+
+            // Belt angle lateral bending stiffness factor
+            const beltStiffFactor = 1.0 + 0.42 * (Math.cos(betaRad) - Math.cos(betaRef)) / Math.cos(betaRef)
+                                        + 0.14 * (Math.sin(2 * betaRad) - Math.sin(2 * betaRef));
+
+            // Inflation pressure factor
+            const piRatio = pi_bar / 2.4;
+            const Fz_peak = 6.35 * Math.pow(piRatio, 0.48); 
+            const C_alpha_peak_rad = 64500 * Math.pow(piRatio, 0.24) * beltStiffFactor; 
+
+            // Pacejka-Brush hybrid non-linear load saturation curve
+            const normLoad = Fz_kN / Fz_peak;
+            const shapeSat = Math.sin(1.92 * Math.atan(1.24 * normLoad));
+
+            // Combined slip (kappa) friction ellipse degressive factor
+            const slipX = kappa_pct / 100.0;
+            const kappaFactor = 1.0 / Math.sqrt(1.0 + Math.pow(slipX / 0.085, 2) * 0.68);
+
+            const C_alpha_rad_N = C_alpha_peak_rad * shapeSat * kappaFactor;
+            const C_alpha_deg = C_alpha_rad_N * (Math.PI / 180.0);
+            const C_alpha_rad_kN = C_alpha_rad_N / 1000.0;
+
+            const Fz_N = Math.max(100, Fz_kN * 1000.0);
+            const CC_alpha_deg = C_alpha_deg / Fz_N;
+            const CC_alpha_rad = C_alpha_rad_N / Fz_N;
+
+            return {
+                C_alpha_deg,
+                C_alpha_rad_kN,
+                CC_alpha_deg,
+                CC_alpha_rad
+            };
+        }
+
+        /**
+         * Computes physically grounded local Cord Stress sigma_c [MPa], base pre-stress sigma_0 [MPa],
+         * dynamic stress change delta_sigma [MPa], and normalized FEA color scalar t in [0, 1]
+         * for ALL four cord reinforcement layers.
+         */
+        function evaluateCordStressAndColor(layerType, psi, s, footprintProximity, cordSign = 1, targetColor = new THREE.Color()) {
+            const absS = Math.abs(s);
+            const contactAngle = Math.asin(Math.min(0.95, state.halfLength_a / R_UNLOADED));
+            const loadFactor = state.Fz / 4.5;
+            const pressFactor = state.pi / 2.4;
+            const effAlpha = state.alpha + state.alpha_ply * 2.5;
+            const slipX = state.kappa / 100;
+
+            // Entry (+contactAngle) and Exit (-contactAngle) transition knuckle bells
+            const entryKnuckle = Math.exp(-Math.pow((psi - contactAngle * 0.88) / 0.16, 2));
+            const exitKnuckle = Math.exp(-Math.pow((psi + contactAngle * 0.88) / 0.16, 2));
+            const knuckleWave = entryKnuckle + 1.12 * exitKnuckle;
+
+            let sigma0 = 50;
+            let deltaSigma = 0;
+            let scaleMaxMPa = 260;
+
+            if (layerType === 'carcass') {
+                // 1. 90° RADIAL CARCASS CORDS
+                const sidewallProfile = 0.82 + 0.32 * Math.sin(Math.min(1, absS) * Math.PI);
+                sigma0 = 54.0 * pressFactor * sidewallProfile;
+
+                const patchRelaxation = -48.0 * loadFactor * (2.4 / Math.max(1.2, state.pi)) * footprintProximity * (0.55 + 0.45 * Math.sin(Math.min(1, absS) * Math.PI));
+                const upperArchPull = +21.0 * loadFactor * (1.0 - footprintProximity) * (0.55 + 0.45 * Math.cos(psi * 0.65));
+                const corneringSidewallAsym = +26.0 * (effAlpha / 6.0) * loadFactor * Math.sign(s) * Math.sin(Math.min(1, absS) * Math.PI) * (0.30 + 0.70 * footprintProximity);
+
+                const sidewallShearProfile = Math.sin(Math.min(1, absS) * Math.PI);
+                const torqueAsymWave = -38.0 * (slipX / 0.08) * Math.sin(psi) * (0.35 + 0.65 * footprintProximity) * sidewallShearProfile;
+                const torqueStretchBoost = +18.0 * Math.min(1.5, Math.abs(slipX) / 0.08) * sidewallShearProfile * (0.4 + 0.6 * footprintProximity);
+
+                deltaSigma = patchRelaxation + upperArchPull + corneringSidewallAsym + torqueAsymWave + torqueStretchBoost;
+                scaleMaxMPa = 125.0;
+
+            } else if (layerType === 'belt1' || layerType === 'belt2') {
+                // 2. CROSSED STEEL BELT CORDS AT DISTINCT RADII R_b1 AND R_b2
+                const betaRad = THREE.MathUtils.degToRad(state.beta);
+                const sMax = layerType === 'belt2' ? 0.48 : 0.55;
+                const normWidth = Math.min(1.1, absS / sMax);
+
+                sigma0 = 96.0 * pressFactor * Math.pow(Math.cos(betaRad), 2) * (1.0 - 0.28 * normWidth * normWidth);
+                const radiusDiffStrain = (layerType === 'belt2' ? +38.0 : -22.0) * loadFactor * footprintProximity;
+
+                const edgeBell = Math.exp(-Math.pow((normWidth - 0.86) / 0.16, 2));
+                const pantographStress = +46.0 * loadFactor * (state.deltaBeta / 2.4) * (0.35 * footprintProximity + 0.65 * knuckleWave) * (0.45 + 0.75 * edgeBell);
+                const lateralTrussAsym = cordSign * (effAlpha / 5.0) * 44.0 * loadFactor * (0.65 * footprintProximity + 0.55 * Math.sin(psi * 2.4)) * (0.5 + 0.5 * normWidth);
+                const beltGirderBending = -(effAlpha / 5.0) * 32.0 * loadFactor * (s / sMax) * footprintProximity;
+
+                // Fixed: Reversed signs so braking adds compression at trailing edge
+                const longWave = -(slipX / 0.08) * 58.0 * loadFactor * Math.sin(psi * 1.8) * (0.35 + 0.65 * footprintProximity);
+                const longShearEdgeBoost = +Math.abs(slipX / 0.08) * 24.0 * edgeBell * footprintProximity;
+
+                deltaSigma = radiusDiffStrain + pantographStress + lateralTrussAsym + beltGirderBending + longWave + longShearEdgeBoost;
+                scaleMaxMPa = 285.0;
+
+            } else if (layerType === 'capply') {
+                // 3. 0° NYLON CAP PLY
+                const normWidth = Math.min(1.1, absS / 0.55);
+                const speedPull = 34.0 * Math.pow(state.speed / 100.0, 2);
+                sigma0 = 64.0 * pressFactor + speedPull;
+
+                const edgeHoldDown = +36.0 * loadFactor * Math.exp(-Math.pow((normWidth - 0.85) / 0.18, 2)) * (0.45 + 0.55 * knuckleWave);
+                const hoopWave = (+42.0 * knuckleWave - 18.0 * footprintProximity * (1.0 - normWidth * 0.5)) * loadFactor;
+                const kappaCapWave = -(slipX / 0.08) * 48.0 * loadFactor * Math.sin(psi * 1.9) * (0.3 + 0.7 * footprintProximity);
+                const shoulderCornering = +22.0 * (effAlpha / 6.0) * (s / 0.55) * footprintProximity;
+
+                deltaSigma = edgeHoldDown + hoopWave + kappaCapWave + shoulderCornering;
+                scaleMaxMPa = 185.0;
+            }
+
+            const sigmaTotal = Math.max(-15.0, sigma0 + deltaSigma);
+
+            if (state.cordColorMode === 'layer') {
+                if (layerType === 'carcass') targetColor.setHex(0xf43f5e);
+                else if (layerType === 'belt1') targetColor.setHex(0xfbbf24);
+                else if (layerType === 'belt2') targetColor.setHex(0x38bdf8);
+                else targetColor.setHex(0x22d3ee);
+            } else if (state.cordColorMode === 'delta') {
+                const maxDelta = layerType === 'carcass' ? 52.0 : (layerType === 'capply' ? 65.0 : 95.0);
+                const tDelta = THREE.MathUtils.clamp(0.5 + 0.5 * (deltaSigma / maxDelta), 0.02, 0.99);
+                getFEAColor(tDelta, targetColor);
+            } else {
+                const tAbs = THREE.MathUtils.clamp(sigmaTotal / scaleMaxMPa, 0.03, 0.99);
+                getFEAColor(tAbs, targetColor);
+            }
+
+            return { sigmaTotal, sigma0, deltaSigma };
+        }
+
+        function getAngularDistFromContact(theta) {
+            let psi = (theta + Math.PI / 2) % (2 * Math.PI);
+            if (psi > Math.PI) psi -= 2 * Math.PI;
+            if (psi < -Math.PI) psi += 2 * Math.PI;
+            return psi;
+        }
+
+        function updatePhysicsEngine() {
+            // 1. Vertical Stiffness
+            const k_pneumatic = 118 * (state.pi / 2.4);
+            const k_structural = 40;
+            const k_total = k_pneumatic + k_structural;
+
+            state.fz_mm = (state.Fz * 1000) / k_total;
+            const deflScene = state.fz_mm / 100;
+
+            const geomChord = Math.sqrt(Math.max(0.01, 2 * R_UNLOADED * deflScene - deflScene * deflScene));
+            state.halfLength_a = geomChord * 0.86;
+
+            // 2. Pantograph Belt Angle Change
+            const betaRad = THREE.MathUtils.degToRad(state.beta);
+            const circCompression = -deflScene / (R_UNLOADED * 1.75);
+            const tanBetaFlat = Math.tan(betaRad) * (1 - circCompression * (1 + Math.pow(Math.tan(betaRad), 2)));
+            const betaFlat = Math.atan(tanBetaFlat);
+            state.deltaBeta = THREE.MathUtils.radToDeg(betaFlat - betaRad);
+
+            // 3. PLY STEER MECHANICS
+            const optAngleCoupling = (Math.sin(2 * betaRad) * Math.cos(betaRad)) / (Math.sin(THREE.MathUtils.degToRad(44)) * Math.cos(THREE.MathUtils.degToRad(22)));
+            const loadFactor = Math.pow(state.Fz / 4.5, 0.72) * Math.pow(2.4 / state.pi, 0.45);
+            state.alpha_ply = state.beltStackSign * 0.28 * loadFactor * optAngleCoupling;
+
+            // 4. Interlaminar Belt Edge Shear Stress tau_xz
+            const angleFactor = Math.sin(2 * betaRad) / Math.sin(2 * THREE.MathUtils.degToRad(22));
+            const slipAmplifier = 1 + 0.06 * Math.abs(state.alpha + state.alpha_ply) + 0.045 * Math.abs(state.kappa);
+            state.tauEdgeMax = 3.42 * (state.Fz / 4.5) * (2.4 / state.pi) * angleFactor * slipAmplifier;
+
+            // 5. 2D/3D Brush Model Integration
+            const mu = 1.15;
+            const a_m = state.halfLength_a * 0.1;
+            const b_m = 0.095;
+            const c_py = 4.35e6 * (1 + 0.3 * Math.sin(betaRad));
+            const c_px = 5.20e6 * Math.cos(betaRad);
+
+            const tanAlphaKinematic = Math.tan(THREE.MathUtils.degToRad(state.alpha));
+            const tanAlphaPly = Math.tan(THREE.MathUtils.degToRad(state.alpha_ply));
+            const tanAlphaEff = tanAlphaKinematic + tanAlphaPly;
+            const slipX = state.kappa / 100;
+
+            let sumFy = 0, sumFyPlyOnly = 0, sumFx = 0, sumMz = 0;
+            let adhesionSteps = 0;
+            const N = 56;
+            const dx = (2 * a_m) / N;
+            const loadBuckling = (state.Fz / 4.5) * (2.4 / state.pi);
+
+            for (let i = 0; i <= N; i++) {
+                const u = -1 + (2 * i) / N;
+                const x = u * a_m;
+                const distFromEntry = a_m - x;
+
+                const shape = Math.max(0, (1 - u * u) * (1 + 0.45 * loadBuckling * u * u) * (1 + 0.12 * u));
+                const pz = (state.Fz * 1000 / (4 * a_m * b_m)) * 1.42 * shape;
+                const q_max = mu * pz;
+
+                const qy_ply_el = c_py * tanAlphaPly * distFromEntry;
+                const qy_ply = Math.sign(qy_ply_el) * Math.min(Math.abs(qy_ply_el), q_max);
+                sumFyPlyOnly += qy_ply * (2 * b_m) * dx;
+
+                const qy_el = c_py * tanAlphaEff * distFromEntry;
+                const qx_el = c_px * slipX * distFromEntry;
+                const q_el = Math.hypot(qx_el, qy_el);
+
+                let qx = qx_el, qy = qy_el;
+                if (q_el > q_max && q_el > 1e-5) {
+                    qx = (qx_el / q_el) * q_max;
+                    qy = (qy_el / q_el) * q_max;
+                } else {
+                    adhesionSteps++;
+                }
+
+                sumFy += qy * (2 * b_m) * dx;
+                sumFx += qx * (2 * b_m) * dx;
+                sumMz += qy * x * (2 * b_m) * dx;
+            }
+
+            state.Mz_ply = -state.beltStackSign * 2.4 * (state.Fz / 4.5);
+            state.Fy_ply = sumFyPlyOnly;
+            state.Fy_total = sumFy;
+            state.Fx = sumFx;
+            state.Mz = sumMz + state.Mz_ply;
+            state.np_mm = Math.abs(state.Fy_total) > 20 ? (Math.abs(state.Mz / state.Fy_total) * 1000) : (a_m * 0.31 * 1000);
+            state.adhesionPct = Math.round((adhesionSteps / (N + 1)) * 100);
+
+            // 5b. Torsional Sidewall Wind-Up (gamma_sw) & Tangential Belt Shift (dx_belt)
+            const c_torsion_belt = 295.0 * Math.pow(state.pi / 2.4, 0.65);
+            state.dx_belt_mm = state.Fx / c_torsion_belt;
+            const sidewallHeight_mm = (R_CARCASS_CROWN - R_RIM) * 100.0;
+            state.gamma_sw_deg = THREE.MathUtils.radToDeg(Math.atan2(state.dx_belt_mm, sidewallHeight_mm));
+
+            // 5c. Cornering Stiffness & Cornering Coefficient
+            const cMetrics = evaluateCorneringMetricsAtLoad(state.Fz, state.pi, state.beta, state.kappa);
+            state.C_alpha_deg = cMetrics.C_alpha_deg;
+            state.C_alpha_rad = cMetrics.C_alpha_rad_kN;
+            state.CC_alpha_deg = cMetrics.CC_alpha_deg;
+            state.CC_alpha_rad = cMetrics.CC_alpha_rad;
+
+            const absAlpha = Math.abs(state.alpha);
+            if (absAlpha > 0.25) {
+                const netCorneringFy = Math.abs(state.Fy_total - state.Fy_ply);
+                state.C_alpha_secant_deg = Math.min(state.C_alpha_deg, netCorneringFy / absAlpha);
+            } else {
+                state.C_alpha_secant_deg = state.C_alpha_deg;
+            }
+            state.CC_alpha_secant_deg = state.C_alpha_secant_deg / (state.Fz * 1000.0);
+
+            // 6. Sample Min/Max Cord Stresses
+            let cMin = 999, cMax = -999;
+            let b1Min = 999, b1Max = -999;
+            let b2Min = 999, b2Max = -999;
+            let capMin = 999, capMax = -999;
+            const contactHalfAngle = Math.asin(Math.min(0.95, state.halfLength_a / R_UNLOADED)) * 1.26;
+            const dummyColor = new THREE.Color();
+
+            for (let ip = 0; ip < 36; ip++) {
+                const psiSample = -Math.PI + (2 * Math.PI * ip) / 36;
+                const fpProx = Math.exp(-Math.pow(psiSample / (contactHalfAngle * 0.92), 2));
+
+                [-0.65, 0.0, 0.65].forEach(sSample => {
+                    const sc = evaluateCordStressAndColor('carcass', psiSample, sSample, fpProx, 1, dummyColor).sigmaTotal;
+                    if (sc < cMin) cMin = sc;
+                    if (sc > cMax) cMax = sc;
+                });
+
+                [-0.45, 0.0, 0.45].forEach(sSample => {
+                    const sb1 = evaluateCordStressAndColor('belt1', psiSample, sSample, fpProx, state.beltStackSign, dummyColor).sigmaTotal;
+                    if (sb1 < b1Min) b1Min = sb1;
+                    if (sb1 > b1Max) b1Max = sb1;
+
+                    const sb2 = evaluateCordStressAndColor('belt2', psiSample, sSample, fpProx, -state.beltStackSign, dummyColor).sigmaTotal;
+                    if (sb2 < b2Min) b2Min = sb2;
+                    if (sb2 > b2Max) b2Max = sb2;
+
+                    const scap = evaluateCordStressAndColor('capply', psiSample, sSample, fpProx, 1, dummyColor).sigmaTotal;
+                    if (scap < capMin) capMin = scap;
+                    if (scap > capMax) capMax = scap;
+                });
+            }
+
+            state.sigmaCarcMin = Math.round(cMin);
+            state.sigmaCarcMax = Math.round(cMax);
+            state.sigmaBelt1Min = Math.round(b1Min);
+            state.sigmaBelt1Max = Math.round(b1Max);
+            state.sigmaBelt2Min = Math.round(b2Min);
+            state.sigmaBelt2Max = Math.round(b2Max);
+            state.sigmaCapMin = Math.round(capMin);
+            state.sigmaCapMax = Math.round(capMax);
+        }
+
+        /**
+         * Evaluates 3D deformed coordinates (x, y, z) of a point on any tire structural layer
+         */
+        function evaluateDeformedTirePoint(theta, s, effLayerOffset, targetVec, layerId = 'carcass') {
+            const absS = Math.abs(s);
+            const defl = state.fz_mm / 100;
+            const wheelCenterY = R_UNLOADED - defl;
+
+            let r, z;
+            if (absS <= 0.52) {
+                const uCrown = absS / 0.52;
+                r = (R_CARCASS_CROWN + effLayerOffset) - 0.095 * uCrown * uCrown;
+                z = s * (TIRE_HALF_WIDTH * 0.90);
+            } else {
+                const uSw = (absS - 0.52) / 0.48;
+                const rShoulder = (R_CARCASS_CROWN + effLayerOffset) - 0.095;
+                const rBead = R_RIM + 0.045;
+                r = THREE.MathUtils.lerp(rShoulder, rBead, Math.pow(uSw, 1.15));
+                const swArch = Math.sin(uSw * Math.PI) * 0.165;
+                const zBase = THREE.MathUtils.lerp(TIRE_HALF_WIDTH * 0.468, TIRE_HALF_WIDTH * 0.76, uSw);
+                z = Math.sign(s) * (zBase + swArch);
+            }
+
+            const psi = getAngularDistFromContact(theta);
+            const contactHalfAngle = Math.asin(Math.min(0.95, state.halfLength_a / R_UNLOADED)) * 1.26;
+            const footprintProximity = Math.exp(-Math.pow(psi / (contactHalfAngle * 0.92), 2));
+
+            // 0. LONGITUDINAL SLIP (kappa)
+            const u_rad = absS <= 0.56 ? 1.0 : THREE.MathUtils.clamp((1.0 - absS) / 0.44, 0.0, 1.0);
+            const s_sw = Math.pow(Math.sin(u_rad * Math.PI * 0.5), 1.25);
+            const torsionEnv = 0.42 + 0.58 * Math.exp(-(psi * psi) / 0.55);
+
+            const ux_belt_scene = (state.dx_belt_mm / 100.0) * 1.65;
+            const deltaThetaTorsion = +(ux_belt_scene * s_sw * torsionEnv) / Math.max(R_RIM, r);
+            const thetaEff = theta + deltaThetaTorsion;
+
+            const slipNorm = THREE.MathUtils.clamp(state.kappa / 10.0, -1.35, 1.35);
+            // Braking (slipNorm < 0) pushes belt/rubber rearward into trailing edge (auslaufKnuckle bulge)
+            const einlaufKnuckle = Math.exp(-Math.pow((psi - contactHalfAngle * 0.88) / 0.19, 2));
+            const auslaufKnuckle = Math.exp(-Math.pow((psi + contactHalfAngle * 0.88) / 0.19, 2));
+            const radialKappaWave = (slipNorm * (einlaufKnuckle - 0.55 * auslaufKnuckle) - slipNorm * (auslaufKnuckle - 0.55 * einlaufKnuckle)) * 0.052 * (state.Fz / 4.5);
+            r += radialKappaWave * Math.pow(u_rad, 1.5);
+
+            // 1. Sidewall Outward Bulging
+            if (absS > 0.42 && absS < 0.96) {
+                const bulgeBell = Math.sin(((absS - 0.42) / 0.54) * Math.PI);
+                const kappaBulgeAsym = 1.0 + 0.32 * slipNorm * Math.sin(psi * 1.8);
+                const bulgeAmp = defl * 0.65 * (2.4 / state.pi) * footprintProximity * bulgeBell * kappaBulgeAsym;
+                z += Math.sign(s) * bulgeAmp;
+            }
+
+            // 2. Pantograph lateral effect
+            if (absS <= 0.56) {
+                const kappaLatPinch = 1.0 - 0.25 * slipNorm * Math.sin(psi * 2.0);
+                const latContraction = -0.022 * (defl / 0.24) * footprintProximity * kappaLatPinch;
+                z *= (1 + latContraction);
+            }
+
+            // 3. Elastic lateral shift
+            const radialLever = Math.max(0, (r - R_RIM) / (R_UNLOADED - R_RIM));
+            const elasticCarcassShift = state.alpha * 0.026 * (state.Fz / 4.5) * (2.4 / state.pi);
+
+            const normalizedRunThroughPatch = THREE.MathUtils.clamp((contactHalfAngle - psi) / (2 * contactHalfAngle), 0, 1.3);
+            const plySteerSkew = state.alpha_ply * state.plySteerMag * 0.042 * normalizedRunThroughPatch * footprintProximity;
+
+            let interPlyShift = 0;
+            if (layerId === 'belt1') interPlyShift = -state.beltStackSign * 0.014 * (state.Fz / 4.5) * footprintProximity;
+            if (layerId === 'belt2') interPlyShift = +state.beltStackSign * 0.014 * (state.Fz / 4.5) * footprintProximity;
+
+            const trailBell = Math.exp(-Math.pow((psi + 0.09) / (contactHalfAngle * 1.15), 2));
+            const totalLateralShift = THREE.MathUtils.clamp(elasticCarcassShift * (0.15 + 0.85 * trailBell) + plySteerSkew + interPlyShift, -0.42, 0.42);
+            z += totalLateralShift * radialLever;
+
+            let x = r * Math.cos(thetaEff);
+            let y = wheelCenterY + r * Math.sin(thetaEff);
+
+            if (layerId === 'tread' && absS <= 0.58) {
+                const distFromEntryNorm = THREE.MathUtils.clamp((contactHalfAngle - psi) / (2 * contactHalfAngle), 0, 1.2);
+                const treadShearX = ux_belt_scene * 0.48 * distFromEntryNorm * footprintProximity;
+                x += treadShearX;
+            }
+
+            // 4. Contact Patch Flattening
+            const minLayerFloorY = Math.max(0.002, (OFFSET_TREAD - effLayerOffset) * Math.cos(s * 0.65));
+
+            if (y < minLayerFloorY + 0.075 && absS < 0.82) {
+                const pen = (minLayerFloorY + 0.075) - y;
+                if (pen > 0) {
+                    y = minLayerFloorY + 0.075 * Math.exp(-pen / 0.075);
+                }
+                const kappaTangentialStrain = +0.038 * slipNorm * Math.sin(psi * 1.6) * footprintProximity;
+                x *= (1 - 0.042 * footprintProximity + kappaTangentialStrain);
+            }
+
+            targetVec.set(x, y, z);
+            return { psi, footprintProximity, absS, wheelCenterY };
+        }
+
+        function computeLayerFEAScalar(layerType, psi, s, footprintProximity) {
+            const absS = Math.abs(s);
+            const contactAngle = Math.asin(Math.min(0.95, state.halfLength_a / R_UNLOADED));
+
+            if (state.mode === 1) {
+                if (layerType === 'carcass') {
+                    const preTension = 0.46 + 0.20 * ((state.pi - 1.2) / 2.4);
+                    const footprintRelaxation = -0.46 * footprintProximity * (0.45 + 0.55 * Math.sin(Math.min(1, absS) * Math.PI));
+                    const archTensionBoost = 0.24 * (state.Fz / 6.0) * (1 - footprintProximity) * Math.cos(psi * 0.5);
+                    return THREE.MathUtils.clamp(preTension + footprintRelaxation + archTensionBoost, 0.04, 0.98);
+                } else {
+                    const bendingPeak = Math.exp(-Math.pow((Math.abs(psi) - contactAngle) / 0.14, 2));
+                    return THREE.MathUtils.clamp(0.30 + 0.58 * (state.Fz / 6.0) * bendingPeak, 0.1, 0.96);
+                }
+            } else if (state.mode === 2) {
+                const edgeTarget = layerType === 'belt2' ? 0.45 : 0.51;
+                const edgeConcentration = Math.exp(-Math.pow((absS - edgeTarget) / 0.09, 2));
+                const entryExitPeak = Math.exp(-Math.pow((Math.abs(psi) - contactAngle * 0.85) / 0.16, 2)) + 0.48 * footprintProximity;
+                const effSlip = state.alpha + state.alpha_ply * 4.0;
+                const slipAsym = 1 + 0.45 * (effSlip / 10.0) * Math.sign(s);
+                const val = (state.tauEdgeMax / 6.0) * (0.25 + 0.85 * edgeConcentration) * entryExitPeak * slipAsym;
+                return THREE.MathUtils.clamp(0.10 + val * 0.92, 0.05, 0.99);
+            } else {
+                const loadBuckling = (state.Fz / 4.5) * (2.4 / state.pi);
+                const latShape = loadBuckling > 1.05 ? (0.4 + 0.6 * Math.pow(absS / 0.55, 2)) : (1 - 0.4 * Math.pow(absS / 0.55, 2));
+                return THREE.MathUtils.clamp(0.12 + 0.82 * footprintProximity * latShape, 0.06, 0.98);
+            }
+        }
+
+        /***********************************************************************
+         * 2. THREE.JS SCENE, YAW AXIS & STEPPED CUTAWAY TIRE CONSTRUCTION
+         ***********************************************************************/
+
+        function initScene() {
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x050811);
+            scene.fog = new THREE.FogExp2(0x050811, 0.026);
+
+            camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(5.2, 2.7, 5.4);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            if (typeof THREE.OrbitControls !== 'undefined') {
+                controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.06;
+                controls.target.set(0, 1.0, 0);
+                controls.maxDistance = 18;
+                controls.minDistance = 1.0;
+            }
+
+            scene.add(new THREE.AmbientLight(0xdbeafe, 0.78));
+
+            const mainLight = new THREE.DirectionalLight(0xffffff, 1.15);
+            mainLight.position.set(6, 10, 7);
+            scene.add(mainLight);
+
+            const fillLight = new THREE.DirectionalLight(0x38bdf8, 0.55);
+            fillLight.position.set(-7, 4, -5);
+            scene.add(fillLight);
+
+            const bottomLight = new THREE.PointLight(0x0ea5e9, 0.85, 10);
+            bottomLight.position.set(0, -2.2, 0);
+            scene.add(bottomLight);
+
+            createGlassRoadPlaneAndYawIndicators();
+
+            wheelYawGroup = new THREE.Group();
+            scene.add(wheelYawGroup);
+
+            tireGroup = new THREE.Group();
+            wheelYawGroup.add(tireGroup);
+
+            createSteppedTireLayers();
+            createRimAndBeadCoresWithSyncMarkers();
+            createCordReinforcementMeshes();
+            createCrownProtractorOverlay();
+            createBeltEdgeShearAndPlySteerVisuals();
+            createMode1LoadPathVectors();
+            createMode3ContactBrushAndPressureField();
+
+            updatePhysicsEngine();
+            updateAllGeometries();
+            updateUIReadouts();
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function createGlassRoadPlaneAndYawIndicators() {
+            const roadGroup = new THREE.Group();
+
+            const glassGeo = new THREE.PlaneGeometry(16, 16);
+            const glassMat = new THREE.MeshPhysicalMaterial({
+                color: 0x0f172a,
+                transparent: true,
+                opacity: 0.34,
+                roughness: 0.15,
+                metalness: 0.1,
+                side: THREE.DoubleSide,
+                depthWrite: false
+            });
+            const glassMesh = new THREE.Mesh(glassGeo, glassMat);
+            glassMesh.rotation.x = -Math.PI / 2;
+            glassMesh.position.y = -0.006;
+            roadGroup.add(glassMesh);
+
+            const grid = new THREE.GridHelper(16, 32, 0x0284c7, 0x1e293b);
+            grid.position.y = -0.003;
+            roadGroup.add(grid);
+
+            const numStreamLines = 11;
+            const segPerLine = 10;
+            const flowGeo = new THREE.BufferGeometry();
+            flowGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(numStreamLines * segPerLine * 2 * 3), 3));
+            roadFlowLines = new THREE.LineSegments(flowGeo, new THREE.LineBasicMaterial({
+                color: 0x10b981,
+                transparent: true,
+                opacity: 0.38
+            }));
+            roadFlowLines.userData = { numStreamLines, segPerLine };
+            roadGroup.add(roadFlowLines);
+
+            scene.add(roadGroup);
+
+            yawIndicatorGroup = new THREE.Group();
+
+            const vAxisGeo = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(0, -0.6, 0),
+                new THREE.Vector3(0, 6.6, 0)
+            ]);
+            const vAxisLine = new THREE.Line(vAxisGeo, new THREE.LineBasicMaterial({
+                color: 0xfacc15,
+                transparent: true,
+                opacity: 0.78
+            }));
+            yawIndicatorGroup.add(vAxisLine);
+
+            const topRingGeo = new THREE.RingGeometry(0.28, 0.33, 36);
+            topRingGeo.rotateX(-Math.PI / 2);
+            const topRing = new THREE.Mesh(topRingGeo, new THREE.MeshBasicMaterial({ color: 0xfacc15, side: THREE.DoubleSide }));
+            topRing.position.y = 6.45;
+            yawIndicatorGroup.add(topRing);
+
+            const hubRingGeo = new THREE.RingGeometry(0.52, 0.56, 36);
+            hubRingGeo.rotateX(-Math.PI / 2);
+            verticalAxisHubRing = new THREE.Mesh(hubRingGeo, new THREE.MeshBasicMaterial({ color: 0xfacc15, side: THREE.DoubleSide, transparent: true, opacity: 0.7 }));
+            verticalAxisHubRing.position.y = 2.9;
+            yawIndicatorGroup.add(verticalAxisHubRing);
+
+            const travelLineGeo = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(-4.2, 0.005, 0),
+                new THREE.Vector3(4.5, 0.005, 0)
+            ]);
+            const travelLine = new THREE.Line(travelLineGeo, new THREE.LineBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.85 }));
+            yawIndicatorGroup.add(travelLine);
+
+            const vArrow = new THREE.ArrowHelper(
+                new THREE.Vector3(1, 0, 0),
+                new THREE.Vector3(1.5, 0.012, 0),
+                2.4,
+                0x10b981,
+                0.32,
+                0.18
+            );
+            yawIndicatorGroup.add(vArrow);
+
+            const wheelLineGeo = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(-4.2, 0.009, 0),
+                new THREE.Vector3(4.2, 0.009, 0)
+            ]);
+            wheelHeadingLine = new THREE.Line(wheelLineGeo, new THREE.LineBasicMaterial({ color: 0xfbbf24, linewidth: 2 }));
+            yawIndicatorGroup.add(wheelHeadingLine);
+
+            const sectorGeo = new THREE.BufferGeometry();
+            const arcSegments = 32;
+            sectorGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(arcSegments * 3 * 3), 3));
+            slipSectorMesh = new THREE.Mesh(sectorGeo, new THREE.MeshBasicMaterial({
+                color: 0xf59e0b,
+                transparent: true,
+                opacity: 0.28,
+                side: THREE.DoubleSide,
+                depthWrite: false
+            }));
+            yawIndicatorGroup.add(slipSectorMesh);
+
+            const arcLineGeo = new THREE.BufferGeometry();
+            arcLineGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array((arcSegments + 1) * 3), 3));
+            slipArcLine = new THREE.Line(arcLineGeo, new THREE.LineBasicMaterial({ color: 0xfacc15, linewidth: 2 }));
+            yawIndicatorGroup.add(slipArcLine);
+
+            const ringGeo = new THREE.RingGeometry(1.32, 1.36, 64);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.45 });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = -Math.PI / 2;
+            ring.position.y = 0.002;
+            yawIndicatorGroup.add(ring);
+
+            // 3D ISO 8855 / DIN 70000 Reference Coordinate Triad on Road Plane (Strictly Right-Handed: eX x eY = eZ)
+            const triadOrigin = new THREE.Vector3(-4.4, 0.015, -2.4);
+
+            // +X Arrow: Driving Direction / Travel Velocity v (collinear with Three.js +X)
+            const triadArrowX = new THREE.ArrowHelper(
+                new THREE.Vector3(1, 0, 0),
+                triadOrigin,
+                1.15,
+                0x10b981,
+                0.22,
+                0.14
+            );
+            yawIndicatorGroup.add(triadArrowX);
+
+            // +Y Arrow: Lateral Axis / Wheel Rotation & Spin Axis (collinear with Three.js -Z: Driver's Left)
+            // In Three.js: (1, 0, 0) x (0, 0, -1) = (0, 1, 0) -> Strictly Right-Handed!
+            const triadArrowY = new THREE.ArrowHelper(
+                new THREE.Vector3(0, 0, -1),
+                triadOrigin,
+                1.15,
+                0xf59e0b,
+                0.22,
+                0.14
+            );
+            yawIndicatorGroup.add(triadArrowY);
+
+            // +Z Arrow: Vertical Axis / Road Normal / Yaw Axis (collinear with Three.js +Y: Upward)
+            const triadArrowZ = new THREE.ArrowHelper(
+                new THREE.Vector3(0, 1, 0),
+                triadOrigin,
+                1.15,
+                0x38bdf8,
+                0.22,
+                0.14
+            );
+            yawIndicatorGroup.add(triadArrowZ);
+
+            function createCoordLabelSprite(text, colorCss) {
+                const canvas = document.createElement('canvas');
+                canvas.width = 256;
+                canvas.height = 64;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+                if (ctx.roundRect) {
+                    ctx.roundRect(4, 4, 248, 56, 10);
+                } else {
+                    ctx.rect(4, 4, 248, 56);
+                }
+                ctx.fill();
+                ctx.strokeStyle = colorCss;
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                ctx.font = 'bold 24px monospace';
+                ctx.fillStyle = colorCss;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(text, 128, 32);
+
+                const texture = new THREE.CanvasTexture(canvas);
+                const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
+                const sprite = new THREE.Sprite(spriteMat);
+                sprite.scale.set(1.15, 0.29, 1.0);
+                return sprite;
+            }
+
+            const spriteX = createCoordLabelSprite('+X: Driving (v)', '#10b981');
+            spriteX.position.set(triadOrigin.x + 1.25, 0.16, triadOrigin.z);
+            yawIndicatorGroup.add(spriteX);
+
+            const spriteY = createCoordLabelSprite('+Y: Lateral/Spin', '#f59e0b');
+            spriteY.position.set(triadOrigin.x, 0.16, triadOrigin.z - 1.25);
+            yawIndicatorGroup.add(spriteY);
+
+            const spriteZ = createCoordLabelSprite('+Z: Vertical (Yaw)', '#38bdf8');
+            spriteZ.position.set(triadOrigin.x, triadOrigin.y + 1.28, triadOrigin.z);
+            yawIndicatorGroup.add(spriteZ);
+
+            scene.add(yawIndicatorGroup);
+        }
+
+        function createToroidalLayerMesh(thetaSpan, sMin, sMax, segT, segS, matOptions) {
+            const geometry = new THREE.BufferGeometry();
+            const vertexCount = (segT + 1) * (segS + 1);
+            const positions = new Float32Array(vertexCount * 3);
+            const colors = new Float32Array(vertexCount * 3);
+            const indices = [];
+
+            for (let it = 0; it < segT; it++) {
+                for (let is = 0; is < segS; is++) {
+                    const a = it * (segS + 1) + is;
+                    const b = (it + 1) * (segS + 1) + is;
+                    const c = (it + 1) * (segS + 1) + (is + 1);
+                    const d = it * (segS + 1) + (is + 1);
+                    indices.push(a, b, d, b, c, d);
+                }
+            }
+
+            geometry.setIndex(indices);
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const material = new THREE.MeshStandardMaterial({
+                vertexColors: true,
+                side: THREE.DoubleSide,
+                roughness: 0.45,
+                metalness: 0.15,
+                ...matOptions
+            });
+
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.userData = { thetaSpan, sMin, sMax, segT, segS };
+            return mesh;
+        }
+
+        function createSteppedTireLayers() {
+            carcassMesh = createToroidalLayerMesh(Math.PI * 1.92, -1.0, 1.0, SEG_THETA, SEG_PHI, {
+                roughness: 0.42,
+                metalness: 0.18
+            });
+            tireGroup.add(carcassMesh);
+
+            belt1Mesh = createToroidalLayerMesh(Math.PI * 1.72, -0.55, 0.55, SEG_THETA, 22, {
+                roughness: 0.3,
+                metalness: 0.55
+            });
+            tireGroup.add(belt1Mesh);
+
+            belt2Mesh = createToroidalLayerMesh(Math.PI * 1.50, -0.48, 0.48, SEG_THETA, 20, {
+                roughness: 0.3,
+                metalness: 0.55
+            });
+            tireGroup.add(belt2Mesh);
+
+            capPlyMesh = createToroidalLayerMesh(Math.PI * 1.32, -0.57, 0.57, SEG_THETA, 18, {
+                roughness: 0.35,
+                metalness: 0.25,
+                transparent: true,
+                opacity: 0.84
+            });
+            tireGroup.add(capPlyMesh);
+
+            treadMesh = createToroidalLayerMesh(Math.PI * 1.15, -1.0, 1.0, SEG_THETA, SEG_PHI, {
+                color: 0x1e293b,
+                vertexColors: false,
+                roughness: 0.72,
+                metalness: 0.08
+            });
+            tireGroup.add(treadMesh);
+        }
+
+        function createRimAndBeadCoresWithSyncMarkers() {
+            rimGroup = new THREE.Group();
+
+            const barrelGeo = new THREE.CylinderGeometry(R_RIM - 0.05, R_RIM - 0.05, TIRE_HALF_WIDTH * 1.52, 48, 1, true);
+            barrelGeo.rotateZ(Math.PI / 2);
+            barrelGeo.rotateY(Math.PI / 2);
+            const rimMat = new THREE.MeshStandardMaterial({
+                color: 0x94a3b8,
+                metalness: 0.82,
+                roughness: 0.22,
+                side: THREE.DoubleSide
+            });
+            rimGroup.add(new THREE.Mesh(barrelGeo, rimMat));
+
+            [-1, 1].forEach(sign => {
+                const flangeGeo = new THREE.TorusGeometry(R_RIM, 0.045, 16, 64);
+                const flange = new THREE.Mesh(flangeGeo, rimMat);
+                flange.position.z = sign * TIRE_HALF_WIDTH * 0.76;
+                rimGroup.add(flange);
+
+                const beadGeo = new THREE.TorusGeometry(R_RIM + 0.055, 0.042, 14, 64);
+                const beadMat = new THREE.MeshStandardMaterial({
+                    color: 0xd946ef,
+                    emissive: 0x701a75,
+                    emissiveIntensity: 0.45,
+                    metalness: 0.7,
+                    roughness: 0.25
+                });
+                const bead = new THREE.Mesh(beadGeo, beadMat);
+                bead.position.z = sign * TIRE_HALF_WIDTH * 0.76;
+                rimGroup.add(bead);
+            });
+
+            const hubGeo = new THREE.CylinderGeometry(0.46, 0.46, 0.7, 24);
+            hubGeo.rotateX(Math.PI / 2);
+            rimGroup.add(new THREE.Mesh(hubGeo, new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.7, roughness: 0.3 })));
+
+            for (let i = 0; i < 5; i++) {
+                const thetaMat = (i / 5) * Math.PI * 2;
+                const spokeGeo = new THREE.BoxGeometry(R_RIM - 0.46, 0.16, 0.10);
+                const spoke = new THREE.Mesh(spokeGeo, new THREE.MeshStandardMaterial({
+                    color: 0x64748b,
+                    metalness: 0.65,
+                    roughness: 0.28,
+                    transparent: true,
+                    opacity: 0.55
+                }));
+                const rMid = (R_RIM + 0.46) * 0.5;
+                spoke.position.set(Math.cos(thetaMat) * rMid, Math.sin(thetaMat) * rMid, 0);
+                spoke.rotation.z = thetaMat;
+                rimGroup.add(spoke);
+            }
+
+            const rimSyncMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+            for (let k = 0; k < 8; k++) {
+                const thetaMat = (k / 8) * Math.PI * 2;
+                [-1, 1].forEach(signZ => {
+                    const markerGeo = new THREE.BoxGeometry(0.14, 0.07, 0.08);
+                    const marker = new THREE.Mesh(markerGeo, rimSyncMat);
+                    const rMarker = R_RIM - 0.04;
+                    marker.position.set(Math.cos(thetaMat) * rMarker, Math.sin(thetaMat) * rMarker, signZ * (TIRE_HALF_WIDTH * 0.78));
+                    marker.rotation.z = thetaMat;
+                    rimGroup.add(marker);
+                });
+            }
+
+            tireGroup.add(rimGroup);
+
+            const syncGeo = new THREE.BufferGeometry();
+            syncGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(8 * 2 * 6 * 3), 3));
+            tireBeadSyncMarkers = new THREE.LineSegments(syncGeo, new THREE.LineBasicMaterial({ color: 0xfacc15, linewidth: 2 }));
+            tireGroup.add(tireBeadSyncMarkers);
+        }
+
+        function createCordReinforcementMeshes() {
+            const numCarcassCords = 64;
+            const ptsPerCarcass = 28;
+            const carcassGeo = new THREE.BufferGeometry();
+            carcassGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(numCarcassCords * ptsPerCarcass * 2 * 3), 3));
+            carcassGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(numCarcassCords * ptsPerCarcass * 2 * 3), 3));
+            carcassCordLines = new THREE.LineSegments(carcassGeo, new THREE.LineBasicMaterial({ vertexColors: true }));
+            carcassCordLines.userData = { numCords: numCarcassCords, ptsPerCord: ptsPerCarcass };
+            tireGroup.add(carcassCordLines);
+
+            const numBeltCords = 56;
+            const ptsPerBelt = 28;
+
+            const b1Geo = new THREE.BufferGeometry();
+            b1Geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(numBeltCords * ptsPerBelt * 2 * 3), 3));
+            b1Geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(numBeltCords * ptsPerBelt * 2 * 3), 3));
+            belt1CordLines = new THREE.LineSegments(b1Geo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.98 }));
+            belt1CordLines.userData = { numCords: numBeltCords, ptsPerCord: ptsPerBelt };
+            tireGroup.add(belt1CordLines);
+
+            const b2Geo = new THREE.BufferGeometry();
+            b2Geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(numBeltCords * ptsPerBelt * 2 * 3), 3));
+            b2Geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(numBeltCords * ptsPerBelt * 2 * 3), 3));
+            belt2CordLines = new THREE.LineSegments(b2Geo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.98 }));
+            belt2CordLines.userData = { numCords: numBeltCords, ptsPerCord: ptsPerBelt };
+            tireGroup.add(belt2CordLines);
+
+            const numCapRings = 11;
+            const segCapRing = 72;
+            const capGeo = new THREE.BufferGeometry();
+            capGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(numCapRings * segCapRing * 2 * 3), 3));
+            capGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(numCapRings * segCapRing * 2 * 3), 3));
+            capPlyCordLines = new THREE.LineSegments(capGeo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.95 }));
+            capPlyCordLines.userData = { numRings: numCapRings, segRing: segCapRing };
+            tireGroup.add(capPlyCordLines);
+
+            const numTreadLugs = 48;
+            const lugGeo = new THREE.BufferGeometry();
+            lugGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(numTreadLugs * 4 * 2 * 3), 3));
+            treadLugMarkers = new THREE.LineSegments(lugGeo, new THREE.LineBasicMaterial({ color: 0x64748b, transparent: true, opacity: 0.75 }));
+            treadLugMarkers.userData = { numLugs: numTreadLugs };
+            tireGroup.add(treadLugMarkers);
+        }
+
+        function createCrownProtractorOverlay() {
+            crownProtractorGroup = new THREE.Group();
+
+            const ringGeo = new THREE.RingGeometry(0.58, 0.62, 48);
+            ringGeo.rotateX(-Math.PI / 2);
+            const ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0x94a3b8, side: THREE.DoubleSide, transparent: true, opacity: 0.5 }));
+            crownProtractorGroup.add(ring);
+
+            const eqGeo = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(-0.85, 0, 0),
+                new THREE.Vector3(0.85, 0, 0)
+            ]);
+            const eqLine = new THREE.Line(eqGeo, new THREE.LineBasicMaterial({ color: 0x10b981 }));
+            crownProtractorGroup.add(eqLine);
+
+            const arrowB1 = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0.4), new THREE.Vector3(0, 0, 0), 0.8, 0xfbbf24, 0.16, 0.10);
+            const arrowB2 = new THREE.ArrowHelper(new THREE.Vector3(1, 0, -0.4), new THREE.Vector3(0, 0.025, 0), 0.8, 0x38bdf8, 0.16, 0.10);
+            crownProtractorGroup.userData = { arrowB1, arrowB2 };
+            crownProtractorGroup.add(arrowB1, arrowB2);
+
+            tireGroup.add(crownProtractorGroup);
+        }
+
+        function createBeltEdgeShearAndPlySteerVisuals() {
+            beltEdgeShearRibbons = new THREE.Group();
+            [-0.50, 0.50].forEach(sEdge => {
+                const ribbon = createToroidalLayerMesh(Math.PI * 2, sEdge - 0.055, sEdge + 0.055, SEG_THETA, 5, {
+                    roughness: 0.2,
+                    metalness: 0.1,
+                    emissive: 0x1a0808
+                });
+                beltEdgeShearRibbons.add(ribbon);
+            });
+            tireGroup.add(beltEdgeShearRibbons);
+
+            const skewGeo = new THREE.BufferGeometry();
+            skewGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(45 * 3), 3));
+            beltCenterlineSkewLine = new THREE.Line(skewGeo, new THREE.LineBasicMaterial({ color: 0xfacc15, linewidth: 3 }));
+            tireGroup.add(beltCenterlineSkewLine);
+        }
+
+        function createMode1LoadPathVectors() {
+            mode1VectorsGroup = new THREE.Group();
+            for (let i = 0; i < 18; i++) {
+                const arrow = new THREE.ArrowHelper(
+                    new THREE.Vector3(0, 1, 0),
+                    new THREE.Vector3(0, 0, 0),
+                    0.6,
+                    0x38bdf8,
+                    0.16,
+                    0.10
+                );
+                mode1VectorsGroup.add(arrow);
+            }
+            tireGroup.add(mode1VectorsGroup);
+        }
+
+        function createMode3ContactBrushAndPressureField() {
+            mode3FootprintGroup = new THREE.Group();
+
+            const pGeo = new THREE.PlaneGeometry(1, 1, 32, 20);
+            const vCount = pGeo.attributes.position.count;
+            pGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(vCount * 3), 3));
+
+            const pMat = new THREE.MeshStandardMaterial({
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.72,
+                side: THREE.DoubleSide,
+                roughness: 0.25
+            });
+            pressureSurfaceMesh = new THREE.Mesh(pGeo, pMat);
+            mode3FootprintGroup.add(pressureSurfaceMesh);
+
+            const bxCount = 16, bzCount = 7;
+            const totalBristles = bxCount * bzCount;
+            const bristleGeo = new THREE.BufferGeometry();
+            bristleGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(totalBristles * 4 * 3), 3));
+            bristleGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(totalBristles * 4 * 3), 3));
+
+            brushLinesMesh = new THREE.LineSegments(bristleGeo, new THREE.LineBasicMaterial({ vertexColors: true }));
+            brushLinesMesh.userData = { bxCount, bzCount };
+            mode3FootprintGroup.add(brushLinesMesh);
+
+            // Vector arrows in Mode 3 (mapped from ISO 8855 physical coords to Three.js scene):
+            // Physical F_z (Vertical normal load) -> Three.js (0, 1, 0)
+            // Physical F_y (Lateral force, left)  -> Three.js (0, 0, 1)
+            // Physical F_x (Longitudinal force)   -> Three.js (1, 0, 0)
+            forceArrowFz = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 0), 1.4, 0x38bdf8, 0.24, 0.15);
+            forceArrowFy = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0.03, 0), 1.2, 0xf59e0b, 0.24, 0.15);
+            forceArrowFyPly = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0.07, 0), 0.8, 0xfacc15, 0.20, 0.12);
+            forceArrowFx = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0.03, 0), 1.0, 0x10b981, 0.22, 0.14);
+            mode3FootprintGroup.add(forceArrowFz, forceArrowFy, forceArrowFyPly, forceArrowFx);
+
+            const trailGeo = new THREE.BoxGeometry(1, 0.015, 0.06);
+            trailMarkerMesh = new THREE.Mesh(trailGeo, new THREE.MeshBasicMaterial({ color: 0xf43f5e }));
+            trailMarkerMesh.position.y = 0.015;
+            mode3FootprintGroup.add(trailMarkerMesh);
+
+            momentArcGroup = new THREE.Group();
+            const arcGeo = new THREE.TorusGeometry(0.48, 0.025, 12, 32, Math.PI * 1.35);
+            arcGeo.rotateX(Math.PI / 2);
+            momentArcGroup.add(new THREE.Mesh(arcGeo, new THREE.MeshBasicMaterial({ color: 0xf43f5e })));
+            momentArcGroup.position.y = 0.04;
+            mode3FootprintGroup.add(momentArcGroup);
+
+            wheelYawGroup.add(mode3FootprintGroup);
+        }
+
+        /***********************************************************************
+         * 3. REAL-TIME 3D GEOMETRY, YAW AXIS & FEA COLOR UPDATER
+         ***********************************************************************/
+
+        function updateYawAxisAndRoadIndicators() {
+            const alphaRad = THREE.MathUtils.degToRad(state.alpha);
+            const defl = state.fz_mm / 100;
+            const wheelCenterY = R_UNLOADED - defl;
+
+            wheelYawGroup.rotation.y = -alphaRad;
+
+            if (verticalAxisHubRing) {
+                verticalAxisHubRing.position.y = wheelCenterY;
+            }
+
+            if (wheelHeadingLine) {
+                wheelHeadingLine.rotation.y = -alphaRad;
+            }
+
+            if (slipSectorMesh && slipArcLine) {
+                const showSlipArc = state.showProtractor && Math.abs(state.alpha) > 0.05;
+                slipSectorMesh.visible = showSlipArc;
+                slipArcLine.visible = showSlipArc;
+
+                if (showSlipArc) {
+                    const rArc = 2.95;
+                    const segs = 32;
+                    const secPos = slipSectorMesh.geometry.attributes.position;
+                    const linePos = slipArcLine.geometry.attributes.position;
+
+                    for (let i = 0; i < segs; i++) {
+                        const a0 = (i / segs) * alphaRad;
+                        const a1 = ((i + 1) / segs) * alphaRad;
+
+                        secPos.setXYZ(i * 3, 0, 0.007, 0);
+                        secPos.setXYZ(i * 3 + 1, rArc * Math.cos(a0), 0.007, rArc * Math.sin(a0));
+                        secPos.setXYZ(i * 3 + 2, rArc * Math.cos(a1), 0.007, rArc * Math.sin(a1));
+
+                        linePos.setXYZ(i, rArc * Math.cos(a0), 0.011, rArc * Math.sin(a0));
+                    }
+                    linePos.setXYZ(segs, rArc * Math.cos(alphaRad), 0.011, rArc * Math.sin(alphaRad));
+
+                    secPos.needsUpdate = true;
+                    linePos.needsUpdate = true;
+                }
+            }
+
+            if (roadFlowLines) {
+                const { numStreamLines, segPerLine } = roadFlowLines.userData;
+                const fPos = roadFlowLines.geometry.attributes.position;
+                let ptr = 0;
+                const spanX = 12.0;
+
+                for (let iz = 0; iz < numStreamLines; iz++) {
+                    const z = THREE.MathUtils.lerp(-3.5, 3.5, iz / (numStreamLines - 1));
+                    for (let ix = 0; ix < segPerLine; ix++) {
+                        const phase = ((ix / segPerLine) - state.roadFlowOffset % 1 + 1) % 1;
+                        const xStart = -spanX * 0.5 + phase * spanX;
+                        const xEnd = xStart + 0.42;
+
+                        fPos.setXYZ(ptr, xStart, 0.002, z);
+                        fPos.setXYZ(ptr + 1, xEnd, 0.002, z);
+                        ptr += 2;
+                    }
+                }
+                fPos.needsUpdate = true;
+            }
+        }
+
+        function updateToroidalLayer(mesh, layerOffset, layerType, customSpanRatio = 1.0) {
+            const { thetaSpan, sMin, sMax, segT, segS } = mesh.userData;
+            const posAttr = mesh.geometry.attributes.position;
+            const colAttr = mesh.geometry.attributes.color;
+
+            const activeSpan = state.showCutaway ? thetaSpan * customSpanRatio : Math.PI * 2;
+            const startTheta = state.showCutaway ? (-Math.PI * 0.38) : 0;
+
+            const tmpVec = new THREE.Vector3();
+            const tmpCol = new THREE.Color();
+
+            let idx = 0;
+            for (let it = 0; it <= segT; it++) {
+                const u = it / segT;
+                const theta = startTheta + u * activeSpan;
+
+                for (let is = 0; is <= segS; is++) {
+                    const v = is / segS;
+                    const s = THREE.MathUtils.lerp(sMin, sMax, v);
+
+                    let effOffset = layerOffset;
+                    if (layerType === 'tread') {
+                        const absS = Math.abs(s);
+                        if (absS < 0.52) {
+                            const g1 = Math.exp(-Math.pow((absS - 0.12) / 0.022, 2));
+                            const g2 = Math.exp(-Math.pow((absS - 0.34) / 0.022, 2));
+                            effOffset -= 0.045 * (g1 + g2);
+                        } else {
+                            const sw = (absS - 0.52) / 0.48;
+                            effOffset = THREE.MathUtils.lerp(layerOffset, 0.032, Math.min(1, sw * 1.4));
+                        }
+                    }
+
+                    const info = evaluateDeformedTirePoint(theta, s, effOffset, tmpVec, layerType);
+                    posAttr.setXYZ(idx, tmpVec.x, tmpVec.y, tmpVec.z);
+
+                    if (colAttr) {
+                        if (layerType === 'beltEdge') {
+                            const scalar = computeLayerFEAScalar(layerType, info.psi, s, info.footprintProximity);
+                            getFEAColor(scalar, tmpCol);
+                        } else {
+                            const cordSign = layerType === 'belt2' ? -state.beltStackSign : state.beltStackSign;
+                            evaluateCordStressAndColor(layerType, info.psi, s, info.footprintProximity, cordSign, tmpCol);
+                            if (state.cordContrast) {
+                                tmpCol.multiplyScalar(0.28);
+                            }
+                        }
+                        colAttr.setXYZ(idx, tmpCol.r, tmpCol.g, tmpCol.b);
+                    }
+                    idx++;
+                }
+            }
+
+            posAttr.needsUpdate = true;
+            if (colAttr) colAttr.needsUpdate = true;
+            mesh.geometry.computeVertexNormals();
+        }
+
+        function updateCordReinforcementsAndSyncMarkers() {
+            const tmpA = new THREE.Vector3();
+            const tmpB = new THREE.Vector3();
+            const colA = new THREE.Color();
+            const colB = new THREE.Color();
+
+            tireBeadSyncMarkers.visible = state.showRim;
+            if (tireBeadSyncMarkers.visible) {
+                const syncPos = tireBeadSyncMarkers.geometry.attributes.position;
+                let sPtr = 0;
+                for (let k = 0; k < 8; k++) {
+                    const thetaMat = (k / 8) * Math.PI * 2;
+                    const theta = thetaMat - state.rollPhase;
+                    [-1, 1].forEach(signS => {
+                        for (let seg = 0; seg < 3; seg++) {
+                            const s0 = signS * (1.0 - seg * 0.11);
+                            const s1 = signS * (1.0 - (seg + 1) * 0.11);
+                            evaluateDeformedTirePoint(theta, s0, 0.035, tmpA);
+                            evaluateDeformedTirePoint(theta, s1, 0.035, tmpB);
+                            syncPos.setXYZ(sPtr, tmpA.x, tmpA.y, tmpA.z);
+                            syncPos.setXYZ(sPtr + 1, tmpB.x, tmpB.y, tmpB.z);
+                            sPtr += 2;
+                        }
+                    });
+                }
+                syncPos.needsUpdate = true;
+            }
+
+            carcassCordLines.visible = state.showCarcass;
+            if (carcassCordLines.visible) {
+                const { numCords, ptsPerCord } = carcassCordLines.userData;
+                const pos = carcassCordLines.geometry.attributes.position;
+                const col = carcassCordLines.geometry.attributes.color;
+                let ptr = 0;
+
+                for (let ic = 0; ic < numCords; ic++) {
+                    const thetaMat = (ic / numCords) * Math.PI * 2;
+                    const theta = thetaMat - state.rollPhase;
+                    for (let ip = 0; ip < ptsPerCord; ip++) {
+                        const s0 = -1 + (2 * ip) / ptsPerCord;
+                        const s1 = -1 + (2 * (ip + 1)) / ptsPerCord;
+
+                        const inf0 = evaluateDeformedTirePoint(theta, s0, OFFSET_CARCASS + 0.007, tmpA, 'carcass');
+                        const inf1 = evaluateDeformedTirePoint(theta, s1, OFFSET_CARCASS + 0.007, tmpB, 'carcass');
+
+                        pos.setXYZ(ptr, tmpA.x, tmpA.y, tmpA.z);
+                        pos.setXYZ(ptr + 1, tmpB.x, tmpB.y, tmpB.z);
+
+                        evaluateCordStressAndColor('carcass', inf0.psi, s0, inf0.footprintProximity, 1, colA);
+                        evaluateCordStressAndColor('carcass', inf1.psi, s1, inf1.footprintProximity, 1, colB);
+
+                        col.setXYZ(ptr, colA.r, colA.g, colA.b);
+                        col.setXYZ(ptr + 1, colB.r, colB.g, colB.b);
+                        ptr += 2;
+                    }
+                }
+                pos.needsUpdate = true;
+                col.needsUpdate = true;
+            }
+
+            belt1CordLines.visible = state.showBelt1;
+            belt2CordLines.visible = state.showBelt2;
+
+            const contactHalfAngle = Math.asin(Math.min(0.95, state.halfLength_a / R_UNLOADED)) * 1.25;
+
+            [
+                {
+                    lines: belt1CordLines,
+                    visible: state.showBelt1,
+                    sign: +1 * state.beltStackSign,
+                    offset: OFFSET_BELT1 + 0.006,
+                    radius: R_BELT_1,
+                    halfWidth: BELT1_HALF_WIDTH,
+                    sMax: 0.55,
+                    layerId: 'belt1'
+                },
+                {
+                    lines: belt2CordLines,
+                    visible: state.showBelt2,
+                    sign: -1 * state.beltStackSign,
+                    offset: OFFSET_BELT2 + 0.006,
+                    radius: R_BELT_2,
+                    halfWidth: BELT2_HALF_WIDTH,
+                    sMax: 0.48,
+                    layerId: 'belt2'
+                }
+            ].forEach(({ lines, visible, sign, offset, radius, halfWidth, sMax, layerId }) => {
+                if (!visible) return;
+                const { numCords, ptsPerCord } = lines.userData;
+                const bPos = lines.geometry.attributes.position;
+                const bCol = lines.geometry.attributes.color;
+                let bPtr = 0;
+
+                for (let ic = 0; ic < numCords; ic++) {
+                    const baseThetaMat = (ic / numCords) * Math.PI * 2;
+                    const baseTheta = baseThetaMat - state.rollPhase;
+
+                    for (let ip = 0; ip < ptsPerCord; ip++) {
+                        const u0 = ip / ptsPerCord;
+                        const u1 = (ip + 1) / ptsPerCord;
+
+                        const s0 = THREE.MathUtils.lerp(-sMax, sMax, u0);
+                        const s1 = THREE.MathUtils.lerp(-sMax, sMax, u1);
+
+                        const z0 = (s0 / sMax) * halfWidth;
+                        const z1 = (s1 / sMax) * halfWidth;
+
+                        const psiApprox = getAngularDistFromContact(baseTheta);
+                        const patchBell = Math.exp(-Math.pow(psiApprox / contactHalfAngle, 2));
+                        const kappaBetaMod = -(state.kappa / 10.0) * 1.85 * Math.sin(psiApprox * 1.8) * patchBell;
+                        const betaLocalRad = THREE.MathUtils.degToRad(state.beta + state.deltaBeta * patchBell + kappaBetaMod);
+
+                        const dTheta0 = -sign * z0 / (radius * Math.tan(betaLocalRad));
+                        const dTheta1 = -sign * z1 / (radius * Math.tan(betaLocalRad));
+
+                        const inf0 = evaluateDeformedTirePoint(baseTheta + dTheta0, s0, offset, tmpA, layerId);
+                        const inf1 = evaluateDeformedTirePoint(baseTheta + dTheta1, s1, offset, tmpB, layerId);
+
+                        bPos.setXYZ(bPtr, tmpA.x, tmpA.y, tmpA.z);
+                        bPos.setXYZ(bPtr + 1, tmpB.x, tmpB.y, tmpB.z);
+
+                        evaluateCordStressAndColor(layerId, inf0.psi, s0, inf0.footprintProximity, sign, colA);
+                        evaluateCordStressAndColor(layerId, inf1.psi, s1, inf1.footprintProximity, sign, colB);
+
+                        bCol.setXYZ(bPtr, colA.r, colA.g, colA.b);
+                        bCol.setXYZ(bPtr + 1, colB.r, colB.g, colB.b);
+                        bPtr += 2;
+                    }
+                }
+                bPos.needsUpdate = true;
+                bCol.needsUpdate = true;
+            });
+
+            capPlyCordLines.visible = state.showCapPly && (state.mode !== 2);
+            if (capPlyCordLines.visible) {
+                const { numRings, segRing } = capPlyCordLines.userData;
+                const cPos = capPlyCordLines.geometry.attributes.position;
+                const cCol = capPlyCordLines.geometry.attributes.color;
+                let cPtr = 0;
+                const span = state.showCutaway ? Math.PI * 1.32 : Math.PI * 2;
+                const startT = state.showCutaway ? (-Math.PI * 0.38) : 0;
+
+                for (let ir = 0; ir < numRings; ir++) {
+                    const s = THREE.MathUtils.lerp(-0.54, 0.54, ir / (numRings - 1));
+                    for (let is = 0; is < segRing; is++) {
+                        const t0 = startT + (is / segRing) * span;
+                        const t1 = startT + ((is + 1) / segRing) * span;
+                        const inf0 = evaluateDeformedTirePoint(t0, s, OFFSET_CAPPLY + 0.005, tmpA, 'capply');
+                        const inf1 = evaluateDeformedTirePoint(t1, s, OFFSET_CAPPLY + 0.005, tmpB, 'capply');
+
+                        cPos.setXYZ(cPtr, tmpA.x, tmpA.y, tmpA.z);
+                        cPos.setXYZ(cPtr + 1, tmpB.x, tmpB.y, tmpB.z);
+
+                        evaluateCordStressAndColor('capply', inf0.psi, s, inf0.footprintProximity, 1, colA);
+                        evaluateCordStressAndColor('capply', inf1.psi, s, inf1.footprintProximity, 1, colB);
+
+                        cCol.setXYZ(cPtr, colA.r, colA.g, colA.b);
+                        cCol.setXYZ(cPtr + 1, colB.r, colB.g, colB.b);
+                        cPtr += 2;
+                    }
+                }
+                cPos.needsUpdate = true;
+                cCol.needsUpdate = true;
+            }
+
+            treadLugMarkers.visible = state.showTread && (state.mode !== 2);
+            if (treadLugMarkers.visible) {
+                const { numLugs } = treadLugMarkers.userData;
+                const lPos = treadLugMarkers.geometry.attributes.position;
+                let lPtr = 0;
+                for (let il = 0; il < numLugs; il++) {
+                    const thetaMat = (il / numLugs) * Math.PI * 2;
+                    const theta = thetaMat - state.rollPhase;
+                    [
+                        [-0.52, -0.36],
+                        [0.36, 0.52],
+                        [-0.30, -0.14],
+                        [0.14, 0.30]
+                    ].forEach(([sA, sB]) => {
+                        evaluateDeformedTirePoint(theta, sA, OFFSET_TREAD + 0.005, tmpA, 'tread');
+                        evaluateDeformedTirePoint(theta, sB, OFFSET_TREAD + 0.005, tmpB, 'tread');
+                        lPos.setXYZ(lPtr, tmpA.x, tmpA.y, tmpA.z);
+                        lPos.setXYZ(lPtr + 1, tmpB.x, tmpB.y, tmpB.z);
+                        lPtr += 2;
+                    });
+                }
+                lPos.needsUpdate = true;
+            }
+
+            crownProtractorGroup.visible = state.showProtractor && (state.showBelt1 || state.showBelt2);
+            if (crownProtractorGroup.visible) {
+                const crownPt = new THREE.Vector3();
+                evaluateDeformedTirePoint(Math.PI / 2, 0, OFFSET_BELT2 + 0.025, crownPt);
+                crownProtractorGroup.position.copy(crownPt);
+
+                const betaRad = THREE.MathUtils.degToRad(state.beta);
+                const dirB1 = new THREE.Vector3(Math.cos(betaRad), 0, state.beltStackSign * Math.sin(betaRad)).normalize();
+                const dirB2 = new THREE.Vector3(Math.cos(betaRad), 0, -state.beltStackSign * Math.sin(betaRad)).normalize();
+                crownProtractorGroup.userData.arrowB1.setDirection(dirB1);
+                crownProtractorGroup.userData.arrowB2.setDirection(dirB2);
+            }
+
+            beltCenterlineSkewLine.visible = (state.mode === 2 || state.mode === 3);
+            if (beltCenterlineSkewLine.visible) {
+                const skewPos = beltCenterlineSkewLine.geometry.attributes.position;
+                const contactAng = Math.asin(Math.min(0.95, state.halfLength_a / R_UNLOADED)) * 1.15;
+                for (let i = 0; i < 45; i++) {
+                    const u = -1 + (2 * i) / 44;
+                    const theta = -Math.PI / 2 + u * contactAng;
+                    evaluateDeformedTirePoint(theta, 0, OFFSET_INTERPLY, tmpA, 'interply');
+                    skewPos.setXYZ(i, tmpA.x, Math.max(0.025, tmpA.y * 0.4), tmpA.z);
+                }
+                skewPos.needsUpdate = true;
+            }
+        }
+
+        function updateMode1Vectors() {
+            mode1VectorsGroup.visible = state.mode === 1;
+            if (!mode1VectorsGroup.visible) return;
+
+            const defl = state.fz_mm / 100;
+            const wheelCenterY = R_UNLOADED - defl;
+            const arrows = mode1VectorsGroup.children;
+            const tmpP = new THREE.Vector3();
+
+            for (let i = 0; i < arrows.length; i++) {
+                const theta = (i / arrows.length) * Math.PI * 2;
+                const info = evaluateDeformedTirePoint(theta, 0, 0.02, tmpP);
+                const arrow = arrows[i];
+                const radialDir = new THREE.Vector3(tmpP.x, tmpP.y - wheelCenterY, 0).normalize();
+
+                if (info.footprintProximity > 0.35) {
+                    arrow.position.set(tmpP.x, 0.02, 0);
+                    arrow.setDirection(new THREE.Vector3(0, 1, 0));
+                    arrow.setLength(0.45 + 0.35 * (state.Fz / 5.0), 0.16, 0.10);
+                    arrow.setColor(new THREE.Color(0xf59e0b));
+                } else {
+                    arrow.position.copy(tmpP);
+                    arrow.setDirection(radialDir);
+                    const len = (0.35 + 0.25 * (state.pi / 2.5)) * (1 - 0.45 * info.footprintProximity);
+                    arrow.setLength(len, 0.14, 0.09);
+                    arrow.setColor(new THREE.Color(0x38bdf8));
+                }
+            }
+        }
+
+        function updateMode3FootprintVisuals() {
+            mode3FootprintGroup.visible = true;
+            pressureSurfaceMesh.visible = (state.mode === 3);
+            brushLinesMesh.visible = (state.mode === 3 || state.mode === 2);
+
+            const a = state.halfLength_a;
+            const b = BELT1_HALF_WIDTH * 0.94;
+            const npScene = (state.np_mm / 100);
+
+            forceArrowFz.position.set(0, 0.01, 0);
+            forceArrowFz.setLength(0.6 + (state.Fz / 8.0) * 1.25, 0.24, 0.15);
+
+            const fyLen = Math.min(1.85, Math.abs(state.Fy_total) / 1800);
+            forceArrowFy.visible = Math.abs(state.Fy_total) > 15;
+            if (forceArrowFy.visible) {
+                forceArrowFy.position.set(-npScene, 0.03, 0);
+                forceArrowFy.setDirection(new THREE.Vector3(0, 0, Math.sign(state.Fy_total || 1)));
+                forceArrowFy.setLength(Math.max(0.28, fyLen), 0.20, 0.12);
+            }
+
+            forceArrowFyPly.visible = Math.abs(state.Fy_ply) > 10;
+            if (forceArrowFyPly.visible) {
+                const fyPlyLen = Math.min(1.3, Math.max(0.35, (Math.abs(state.Fy_ply) / 400) * 0.75));
+                forceArrowFyPly.position.set(-npScene * 0.65, 0.065, 0);
+                forceArrowFyPly.setDirection(new THREE.Vector3(0, 0, Math.sign(state.Fy_ply || 1)));
+                forceArrowFyPly.setLength(fyPlyLen, 0.18, 0.11);
+            }
+
+            trailMarkerMesh.visible = forceArrowFy.visible && state.mode === 3;
+            if (trailMarkerMesh.visible) {
+                trailMarkerMesh.scale.x = Math.max(0.05, npScene);
+                trailMarkerMesh.position.set(-npScene * 0.5, 0.015, 0);
+            }
+
+            const fxLen = Math.min(1.6, Math.abs(state.Fx) / 2100);
+            forceArrowFx.visible = fxLen > 0.05;
+            if (forceArrowFx.visible) {
+                forceArrowFx.position.set(0, 0.03, 0);
+                forceArrowFx.setDirection(new THREE.Vector3(Math.sign(state.Fx || 1), 0, 0));
+                forceArrowFx.setLength(Math.max(0.25, fxLen), 0.2, 0.12);
+            }
+
+            momentArcGroup.visible = Math.abs(state.Mz) > 1.5;
+            const mScale = 0.50 + Math.min(0.85, Math.abs(state.Mz) / 85);
+            momentArcGroup.scale.set(mScale, mScale, Math.sign(state.Mz || 1) * mScale);
+
+            if (pressureSurfaceMesh.visible) {
+                const pPos = pressureSurfaceMesh.geometry.attributes.position;
+                const pCol = pressureSurfaceMesh.geometry.attributes.color;
+                const tmpCol = new THREE.Color();
+                const loadBuckling = (state.Fz / 4.5) * (2.4 / state.pi);
+                const effAlpha = state.alpha + state.alpha_ply;
+
+                for (let i = 0; i < pPos.count; i++) {
+                    const ux = (i % 33) / 32 * 2 - 1;
+                    const uz = Math.floor(i / 33) / 20 * 2 - 1;
+
+                    const x = ux * a;
+                    const z = uz * b;
+
+                    const longProfile = Math.max(0, (1 - ux * ux) * (1 + 0.38 * loadBuckling * ux * ux) * (1 + 0.12 * ux));
+                    const shoulderBuckling = THREE.MathUtils.clamp((loadBuckling - 0.85) * 1.25, -0.45, 1.35);
+                    const latProfile = Math.max(0, (1 - Math.pow(uz, 6)) * (1 + shoulderBuckling * (uz * uz - 0.35)));
+                    const corneringTilt = 1 + 0.28 * (effAlpha / 10.0) * uz;
+
+                    const pzNorm = THREE.MathUtils.clamp(longProfile * latProfile * corneringTilt * (state.Fz / 5.5), 0, 1);
+                    const heightY = pzNorm * 0.55;
+
+                    pPos.setXYZ(i, x, heightY, z);
+                    getFEAColor(pzNorm, tmpCol);
+                    pCol.setXYZ(i, tmpCol.r, tmpCol.g, tmpCol.b);
+                }
+                pPos.needsUpdate = true;
+                pCol.needsUpdate = true;
+                pressureSurfaceMesh.geometry.computeVertexNormals();
+            }
+
+            if (brushLinesMesh.visible) {
+                const { bxCount, bzCount } = brushLinesMesh.userData;
+                const bPos = brushLinesMesh.geometry.attributes.position;
+                const bCol = brushLinesMesh.geometry.attributes.color;
+
+                const tanAlphaKinematic = Math.tan(THREE.MathUtils.degToRad(state.alpha));
+                const tanAlphaPly = Math.tan(THREE.MathUtils.degToRad(state.alpha_ply * state.plySteerMag));
+                const tanAlphaEff = tanAlphaKinematic + tanAlphaPly;
+                const slipX = state.kappa / 100;
+
+                let ptr = 0;
+                for (let ix = 0; ix < bxCount; ix++) {
+                    const rawU = ((ix / bxCount) + (state.rollPhase * R_UNLOADED / (2 * a)) % 1 + 1) % 1;
+                    const ux = 1 - 2 * rawU;
+                    const x = ux * a * 0.94;
+                    const distFromEntry = (1 - ux) * a * 0.94;
+
+                    for (let iz = 0; iz < bzCount; iz++) {
+                        const uz = (iz / (bzCount - 1)) * 2 - 1;
+                        const z = uz * b * 0.85;
+
+                        const pLocal = Math.max(0.05, (1 - ux * ux) * (1 - 0.35 * uz * uz));
+                        const maxDefl = 0.28 * pLocal * (state.Fz / 4.5);
+
+                        let dx = distFromEntry * slipX * 2.0;
+                        let dz = distFromEntry * tanAlphaEff;
+                        const dMag = Math.hypot(dx, dz);
+
+                        let isSliding = false;
+                        if (dMag > maxDefl && dMag > 1e-4) {
+                            dx = (dx / dMag) * maxDefl;
+                            dz = (dz / dMag) * maxDefl;
+                            isSliding = true;
+                        }
+
+                        const baseX = x, baseY = 0.13, baseZ = z;
+                        const tipX = x + dx, tipY = 0.008, tipZ = z + dz;
+
+                        bPos.setXYZ(ptr, baseX, baseY, baseZ);
+                        bPos.setXYZ(ptr + 1, tipX, tipY, tipZ);
+                        bPos.setXYZ(ptr + 2, x, 0.008, z);
+                        bPos.setXYZ(ptr + 3, tipX, 0.008, tipZ);
+
+                        const cR = isSliding ? 0.98 : 0.06;
+                        const cG = isSliding ? 0.28 : 0.86;
+                        const cB = isSliding ? 0.32 : 0.92;
+
+                        for (let k = 0; k < 4; k++) {
+                            bCol.setXYZ(ptr + k, cR, cG, cB);
+                        }
+                        ptr += 4;
+                    }
+                }
+                bPos.needsUpdate = true;
+                bCol.needsUpdate = true;
+            }
+        }
+
+        function updateAllGeometries() {
+            const defl = state.fz_mm / 100;
+            const wheelCenterY = R_UNLOADED - defl;
+
+            updateYawAxisAndRoadIndicators();
+
+            rimGroup.visible = state.showRim;
+            rimGroup.position.set(0, wheelCenterY, 0);
+            rimGroup.rotation.z = -state.rollPhase;
+
+            carcassMesh.visible = state.showCarcass;
+            belt1Mesh.visible = state.showBelt1;
+            belt2Mesh.visible = state.showBelt2;
+            capPlyMesh.visible = state.showCapPly && (state.mode !== 2);
+            treadMesh.visible = state.showTread && (state.mode !== 2);
+            beltEdgeShearRibbons.visible = (state.showBelt1 || state.showBelt2) && (state.mode === 2);
+
+            if (carcassMesh.visible) updateToroidalLayer(carcassMesh, OFFSET_CARCASS, 'carcass', 1.0);
+            if (belt1Mesh.visible) updateToroidalLayer(belt1Mesh, OFFSET_BELT1, 'belt1', 0.92);
+            if (belt2Mesh.visible) updateToroidalLayer(belt2Mesh, OFFSET_BELT2, 'belt2', 0.82);
+            if (capPlyMesh.visible) updateToroidalLayer(capPlyMesh, OFFSET_CAPPLY, 'capply', 0.74);
+            if (treadMesh.visible) updateToroidalLayer(treadMesh, OFFSET_TREAD, 'tread', 0.66);
+
+            if (beltEdgeShearRibbons.visible) {
+                beltEdgeShearRibbons.children.forEach(ribbon => {
+                    updateToroidalLayer(ribbon, OFFSET_INTERPLY, 'beltEdge', 1.0);
+                });
+            }
+
+            updateCordReinforcementsAndSyncMarkers();
+            updateMode1Vectors();
+            updateMode3FootprintVisuals();
+        }
+
+        /***********************************************************************
+         * 4. LIVE 2D CANVAS PLOT (CORNERING STIFFNESS & COEFFICIENT + LATSCH)
+         ***********************************************************************/
+
+        function setPlotType(type) {
+            state.plotType = type;
+            const btnCornering = document.getElementById('plot-btn-cornering');
+            const btnContact = document.getElementById('plot-btn-contact');
+            const btnBelt = document.getElementById('plot-btn-belt');
+            const legend = document.getElementById('plot-legend');
+            const titleEl = document.getElementById('plot-title');
+            const xaxisEl = document.getElementById('plot-xaxis');
+
+            const inactiveClass = 'px-1.5 py-0.5 rounded text-[9px] mono bg-slate-800 text-slate-400 border border-slate-700 transition';
+            btnCornering.className = inactiveClass;
+            btnContact.className = inactiveClass;
+            btnBelt.className = inactiveClass;
+
+            if (type === 'cornering') {
+                btnCornering.className = 'px-1.5 py-0.5 rounded text-[9px] mono bg-rose-500/25 text-rose-300 border border-rose-500/50 transition';
+                titleEl.textContent = 'Characteristics C_α(F_z) & CC_α(F_z)';
+                legend.innerHTML = `
+                    <span class="text-sky-400">━ C_α(F_z) [N/deg]</span>
+                    <span class="text-rose-400">━ CC_α=C_α/F_z [1/deg]</span>
+                    <span class="text-amber-300">● Operating Point (F_z, p_i)</span>
+                `;
+                xaxisEl.innerHTML = `
+                    <span>F_z = 1.0 kN (Light Load)</span>
+                    <span>Nominal Load (4.5 kN)</span>
+                    <span>F_z = 8.5 kN (Degression)</span>
+                `;
+            } else if (type === 'contact') {
+                btnContact.className = 'px-1.5 py-0.5 rounded text-[9px] mono bg-sky-500/25 text-sky-300 border border-sky-500/50 transition';
+                titleEl.textContent = 'Contact Profile x ∈ [-a, +a]';
+                legend.innerHTML = `
+                    <span class="text-sky-400">━ p_z(x) Normal Pressure</span>
+                    <span class="text-emerald-400">━ τ_y(x) Lateral Shear</span>
+                    <span class="text-amber-400">┅ y_ply(x) Belt Skew</span>
+                `;
+                xaxisEl.innerHTML = `
+                    <span>Trailing Edge (-a)</span>
+                    <span>Wheel Center (x=0)</span>
+                    <span>Leading Edge (+a) → Wheel Plane</span>
+                `;
+            } else {
+                btnBelt.className = 'px-1.5 py-0.5 rounded text-[9px] mono bg-amber-500/25 text-amber-300 border border-amber-500/50 transition';
+                titleEl.textContent = 'Belt Profile x ∈ [-a, +a]';
+                legend.innerHTML = `
+                    <span class="text-amber-400">━ τ_xz(x) Edge Shear</span>
+                    <span class="text-cyan-400">━ Δβ(x) Pantograph</span>
+                    <span class="text-yellow-300">┅ τ_ply(x) R_b2-R_b1</span>
+                `;
+                xaxisEl.innerHTML = `
+                    <span>Trailing Edge (-a)</span>
+                    <span>Wheel Center (x=0)</span>
+                    <span>Leading Edge (+a) → Wheel Plane</span>
+                `;
+            }
+            drawLongitudinalFEAPlot();
+        }
+
+        function drawLongitudinalFEAPlot() {
+            const canvas = document.getElementById('fea-plot');
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width;
+            const H = canvas.height;
+
+            ctx.clearRect(0, 0, W, H);
+
+            // Subtle background grid
+            ctx.strokeStyle = 'rgba(51, 65, 85, 0.42)';
+            ctx.lineWidth = 1;
+            for (let gx = 1; gx < 4; gx++) {
+                ctx.beginPath();
+                ctx.moveTo((W * gx) / 4, 0);
+                ctx.lineTo((W * gx) / 4, H);
+                ctx.stroke();
+            }
+            for (let gy = 1; gy < 3; gy++) {
+                ctx.beginPath();
+                ctx.moveTo(0, (H * gy) / 3);
+                ctx.lineTo(W, (H * gy) / 3);
+                ctx.stroke();
+            }
+
+            function strokeCurve(pts, color, width = 2, dashed = false) {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = width;
+                if (dashed) ctx.setLineDash([4, 3]);
+                ctx.beginPath();
+                pts.forEach((p, idx) => idx === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+                ctx.stroke();
+                if (dashed) ctx.setLineDash([]);
+            }
+
+            if (state.plotType === 'cornering') {
+                const padL = 28, padR = 28, padT = 14, padB = 14;
+                const plotW = W - padL - padR;
+                const plotH = H - padT - padB;
+
+                const FzMin = 1.0, FzMax = 8.5;
+                const CaMax = 1450; 
+                const CCMax = 0.42; 
+
+                const mapX = (fz) => padL + ((fz - FzMin) / (FzMax - FzMin)) * plotW;
+                const mapY_Ca = (ca) => padT + plotH - THREE.MathUtils.clamp(ca / CaMax, 0, 1.04) * plotH;
+                const mapY_CC = (cc) => padT + plotH - THREE.MathUtils.clamp(cc / CCMax, 0, 1.04) * plotH;
+
+                ctx.font = '9px "JetBrains Mono", monospace';
+                ctx.fillStyle = '#38bdf8';
+                ctx.textAlign = 'left';
+                ctx.fillText('1400', 2, padT + 6);
+                ctx.fillText('700', 2, padT + plotH * 0.5 + 3);
+                ctx.fillText('0', 12, padT + plotH);
+
+                ctx.fillStyle = '#fb7185';
+                ctx.textAlign = 'right';
+                ctx.fillText('0.40', W - 2, padT + 6);
+                ctx.fillText('0.20', W - 2, padT + plotH * 0.5 + 3);
+                ctx.fillText('0.00', W - 2, padT + plotH);
+
+                const N_pts = 75;
+                const caRefPts = [], ccRefPts = [];
+                const caCurPts = [], ccCurPts = [];
+
+                for (let i = 0; i <= N_pts; i++) {
+                    const fz = FzMin + (i / N_pts) * (FzMax - FzMin);
+                    const px = mapX(fz);
+
+                    const ref = evaluateCorneringMetricsAtLoad(fz, 2.4, 22.0, 0.0);
+                    caRefPts.push({ x: px, y: mapY_Ca(ref.C_alpha_deg) });
+                    ccRefPts.push({ x: px, y: mapY_CC(ref.CC_alpha_deg) });
+
+                    const cur = evaluateCorneringMetricsAtLoad(fz, state.pi, state.beta, state.kappa);
+                    caCurPts.push({ x: px, y: mapY_Ca(cur.C_alpha_deg) });
+                    ccCurPts.push({ x: px, y: mapY_CC(cur.CC_alpha_deg) });
+                }
+
+                if (Math.abs(state.pi - 2.4) > 0.03 || Math.abs(state.beta - 22.0) > 0.2 || Math.abs(state.kappa) > 0.2) {
+                    strokeCurve(caRefPts, 'rgba(56, 189, 248, 0.30)', 1.3, true);
+                    strokeCurve(ccRefPts, 'rgba(251, 113, 133, 0.30)', 1.3, true);
+                }
+
+                strokeCurve(caCurPts, '#38bdf8', 2.3);
+                strokeCurve(ccCurPts, '#fb7185', 2.3);
+
+                const opX = mapX(state.Fz);
+                const opY_Ca = mapY_Ca(state.C_alpha_deg);
+                const opY_CC = mapY_CC(state.CC_alpha_deg);
+
+                ctx.strokeStyle = 'rgba(250, 204, 21, 0.55)';
+                ctx.lineWidth = 1.2;
+                ctx.setLineDash([3, 3]);
+                ctx.beginPath();
+                ctx.moveTo(opX, padT);
+                ctx.lineTo(opX, padT + plotH);
+                ctx.stroke();
+
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.40)';
+                ctx.beginPath();
+                ctx.moveTo(padL, opY_Ca);
+                ctx.lineTo(opX, opY_Ca);
+                ctx.stroke();
+
+                ctx.strokeStyle = 'rgba(251, 113, 133, 0.40)';
+                ctx.beginPath();
+                ctx.moveTo(opX, opY_CC);
+                ctx.lineTo(W - padR, opY_CC);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                if (Math.abs(state.alpha) > 1.5) {
+                    const opY_Ca_sec = mapY_Ca(state.C_alpha_secant_deg);
+                    const opY_CC_sec = mapY_CC(state.CC_alpha_secant_deg);
+
+                    ctx.strokeStyle = 'rgba(250, 204, 21, 0.75)';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(opX, opY_Ca);
+                    ctx.lineTo(opX, opY_Ca_sec);
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#fde047';
+                    ctx.beginPath();
+                    ctx.arc(opX, opY_Ca_sec, 3.2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.beginPath();
+                    ctx.arc(opX, opY_CC_sec, 3.0, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.fillStyle = 'rgba(56, 189, 248, 0.30)';
+                ctx.beginPath();
+                ctx.arc(opX, opY_Ca, 7.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#38bdf8';
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(opX, opY_Ca, 4.2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = 'rgba(251, 113, 133, 0.30)';
+                ctx.beginPath();
+                ctx.arc(opX, opY_CC, 7.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#fb7185';
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(opX, opY_CC, 4.2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                const alignLeft = state.Fz > 5.4;
+                const labelX = alignLeft ? opX - 8 : opX + 8;
+                ctx.textAlign = alignLeft ? 'right' : 'left';
+                ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
+
+                ctx.fillStyle = '#7dd3fc';
+                ctx.fillText(`C_α: ${Math.round(state.C_alpha_deg)} N/deg`, labelX, Math.max(padT + 10, Math.min(H - 22, opY_Ca - 5)));
+
+                ctx.fillStyle = '#fda4af';
+                ctx.fillText(`CC_α: ${state.CC_alpha_deg.toFixed(3)} /deg`, labelX, Math.max(padT + 21, Math.min(H - 10, opY_CC + 11)));
+
+                return;
+            }
+
+            const N = 84;
+            const loadBuckling = (state.Fz / 4.5) * (2.4 / state.pi);
+            const tanAlphaEff = Math.tan(THREE.MathUtils.degToRad(state.alpha + state.alpha_ply * state.plySteerMag));
+            const slipX = state.kappa / 100;
+            const combinedSlip = Math.hypot(tanAlphaEff, slipX);
+
+            if (state.plotType === 'contact') {
+                const pzPts = [];
+                const tauPts = [];
+                const plySkewPts = [];
+
+                for (let i = 0; i <= N; i++) {
+                    const u = -1 + (2 * i) / N;
+                    const px = ((u + 1) * 0.5) * (W - 16) + 8;
+
+                    const pz = Math.max(0, (1 - u * u) * (1 + 0.48 * loadBuckling * u * u) * (1 + 0.12 * u)) * (state.Fz / 6.8);
+                    const muPz = Math.min(1, 1.15 * pz);
+
+                    const distFromEntry = 1 - u;
+                    const elasticTau = distFromEntry * combinedSlip * 3.8;
+                    const tau = Math.min(elasticTau, muPz);
+
+                    const plySkewNorm = 0.5 + 0.35 * state.beltStackSign * (1 - u) * (state.Fz / 6.0);
+
+                    pzPts.push({ x: px, y: H - 10 - Math.min(1, pz) * (H - 22) });
+                    tauPts.push({ x: px, y: H - 10 - Math.min(1, tau) * (H - 22) });
+                    plySkewPts.push({ x: px, y: H - 10 - THREE.MathUtils.clamp(plySkewNorm, 0.05, 0.95) * (H - 22) });
+                }
+
+                strokeCurve(plySkewPts, '#facc15', 1.6, true);
+                strokeCurve(pzPts, '#38bdf8', 2.2);
+                strokeCurve(tauPts, '#10b981', 2.2);
+            } else {
+                const edgePts = [];
+                const dBetaPts = [];
+                const plyShearPts = [];
+
+                for (let i = 0; i <= N; i++) {
+                    const u = -1 + (2 * i) / N;
+                    const px = ((u + 1) * 0.5) * (W - 16) + 8;
+
+                    const entryPeak = Math.exp(-Math.pow((u - 0.82) / 0.20, 2));
+                    const exitPeak = Math.exp(-Math.pow((u + 0.82) / 0.20, 2)) * 1.14;
+                    const tauEdge = (entryPeak + exitPeak + 0.24 * (1 - u * u)) * (state.tauEdgeMax / 7.2);
+
+                    const dBetaNorm = (1 - 0.75 * u * u) * (state.deltaBeta / 4.2);
+                    const plyShear = (0.35 + 0.50 * (1 - u * u)) * (Math.abs(state.alpha_ply) / 0.45);
+
+                    edgePts.push({ x: px, y: H - 10 - THREE.MathUtils.clamp(tauEdge, 0, 1) * (H - 22) });
+                    dBetaPts.push({ x: px, y: H - 10 - THREE.MathUtils.clamp(dBetaNorm, 0, 1) * (H - 22) });
+                    plyShearPts.push({ x: px, y: H - 10 - THREE.MathUtils.clamp(plyShear, 0.05, 1) * (H - 22) });
+                }
+
+                strokeCurve(plyShearPts, '#fde047', 1.7, true);
+                strokeCurve(dBetaPts, '#22d3ee', 2.2);
+                strokeCurve(edgePts, '#fbbf24', 2.3);
+            }
+        }
+
+        function updateUIReadouts() {
+            document.getElementById('val-fz').textContent = `${state.Fz.toFixed(2)} kN`;
+            document.getElementById('val-pi').textContent = `${state.pi.toFixed(2)} bar`;
+            document.getElementById('val-alpha').textContent = `${state.alpha >= 0 ? '+' : ''}${state.alpha.toFixed(1)}°`;
+            document.getElementById('val-kappa').textContent = `${state.kappa >= 0 ? '+' : ''}${state.kappa.toFixed(1)} %`;
+            document.getElementById('val-beta').textContent = `±${state.beta.toFixed(1)}°`;
+            document.getElementById('val-speed').textContent = `${state.speed.toFixed(0)} km/h`;
+
+            document.getElementById('out-fz-defl').textContent = state.fz_mm.toFixed(1);
+            document.getElementById('out-2a').textContent = Math.round(state.halfLength_a * 200);
+
+            document.getElementById('out-beta-crown').textContent = `±${state.beta.toFixed(1)}°`;
+            document.getElementById('out-beta-patch').textContent = `±${(state.beta + state.deltaBeta).toFixed(1)}°`;
+
+            const fySign = state.Fy_total >= 0 ? '+' : '';
+            const fyPlySign = state.Fy_ply >= 0 ? '+' : '';
+            const aPlySign = state.alpha_ply >= 0 ? '+' : '';
+            const mzSign = state.Mz >= 0 ? '+' : '';
+
+            document.getElementById('out-fy').textContent = `${fySign}${Math.round(state.Fy_total)}`;
+            document.getElementById('out-fy-ply').textContent = `${fyPlySign}${Math.round(state.Fy_ply)}`;
+            document.getElementById('out-alpha-ply').textContent = `${aPlySign}${state.alpha_ply.toFixed(2)}°`;
+            document.getElementById('out-fx').textContent = Math.round(state.Fx);
+            document.getElementById('out-mz').textContent = `${mzSign}${state.Mz.toFixed(1)}`;
+            document.getElementById('out-np').textContent = Math.round(state.np_mm);
+            document.getElementById('out-tau-edge').textContent = state.tauEdgeMax.toFixed(2);
+
+            // Cornering Stiffness & Cornering Coefficient KPIs
+            document.getElementById('out-calpha').textContent = Math.round(state.C_alpha_deg);
+            document.getElementById('out-calpha-rad').textContent = state.C_alpha_rad.toFixed(1);
+            document.getElementById('out-cc-deg').textContent = state.CC_alpha_deg.toFixed(3);
+            document.getElementById('out-cc-rad').textContent = state.CC_alpha_rad.toFixed(1);
+
+            const dxSign = state.dx_belt_mm >= 0 ? '+' : '';
+            const gammaSign = state.gamma_sw_deg >= 0 ? '+' : '';
+            document.getElementById('out-dx-belt').textContent = `${dxSign}${state.dx_belt_mm.toFixed(1)}`;
+            document.getElementById('out-gamma-sw').textContent = `${gammaSign}${state.gamma_sw_deg.toFixed(2)}°`;
+
+            const slidePct = 100 - state.adhesionPct;
+            document.getElementById('out-adh-pct').textContent = `${state.adhesionPct}%`;
+            document.getElementById('out-slide-pct').textContent = `${slidePct}%`;
+            document.getElementById('bar-adhesion').style.width = `${state.adhesionPct}%`;
+            document.getElementById('bar-sliding').style.width = `${slidePct}%`;
+
+            document.getElementById('out-sigma-carc').textContent = `${state.sigmaCarcMin} → ${state.sigmaCarcMax} MPa`;
+            document.getElementById('out-sigma-cap').textContent = `${state.sigmaCapMin} → ${state.sigmaCapMax} MPa`;
+            document.getElementById('out-sigma-b1').textContent = `${state.sigmaBelt1Min} → ${state.sigmaBelt1Max} MPa`;
+            document.getElementById('out-sigma-b2').textContent = `${state.sigmaBelt2Min} → ${state.sigmaBelt2Max} MPa`;
+
+            drawLongitudinalFEAPlot();
+        }
+
+        /***********************************************************************
+         * 5. MODE SWITCHING, PLY STEER TOGGLES & CAMERA PRESETS
+         ***********************************************************************/
+
+        function setCordColorMode(cMode) {
+            state.cordColorMode = cMode;
+            ['abs', 'delta', 'layer'].forEach(m => {
+                const btn = document.getElementById(`cmap-${m}`);
+                if (btn) btn.classList.toggle('active', m === cMode);
+            });
+
+            const badge = document.getElementById('out-cmap-badge');
+            if (cMode === 'abs') {
+                badge.textContent = 'σ_c Absolute';
+                document.getElementById('colorbar-title').textContent = 'FEA Cord Stress σ_c (All Layers)';
+                document.getElementById('colorbar-unit').textContent = 'MPa';
+                document.getElementById('colorbar-min').textContent = '0 MPa (Contact)';
+                document.getElementById('colorbar-mid').textContent = '120 MPa (p_i)';
+                document.getElementById('colorbar-max').textContent = '280+ MPa (Tension)';
+            } else if (cMode === 'delta') {
+                badge.textContent = 'Δσ_c Dynamic';
+                document.getElementById('colorbar-title').textContent = 'Dynamic Stress Change Δσ_c = σ_c - σ_0';
+                document.getElementById('colorbar-unit').textContent = 'ΔMPa';
+                document.getElementById('colorbar-min').textContent = '-50 MPa (Relieved)';
+                document.getElementById('colorbar-mid').textContent = '0 MPa (Neutral)';
+                document.getElementById('colorbar-max').textContent = '+90 MPa (Peak Tension)';
+            } else {
+                badge.textContent = 'Components';
+                document.getElementById('colorbar-title').textContent = 'Component Colors (Geometry)';
+                document.getElementById('colorbar-unit').textContent = 'Layers';
+                document.getElementById('colorbar-min').textContent = 'Carcass';
+                document.getElementById('colorbar-mid').textContent = 'Belt 1/2';
+                document.getElementById('colorbar-max').textContent = '0° Cap Ply';
+            }
+
+            updateAllGeometries();
+        }
+
+        const modeConfigs = {
+            1: {
+                title: 'Mode 1: Cord Stresses σ_c, Catenary Effect & C_α / CC_α Characteristics',
+                body: '<strong>1. Cord Stress Color Mapping:</strong> All cord reinforcement layers (90° carcass, belts 1 & 2, 0° cap ply) display their real-time local tensile stress <span class="mono">σ_c [MPa]</span>.<br><strong>2. Cornering Stiffness C_α & CC_α:</strong> The live plot above reveals the degressive decay of the cornering coefficient <span class="mono">CC_α = C_α / F_z</span> with the active operating point highlighted.',
+                cbTitle: 'FEA-Kordspannung σ_c (Alle Lagen)',
+                cbUnit: 'MPa',
+                cbMin: '0 MPa (Contact)',
+                cbMid: '120 MPa (p_i)',
+                cbMax: '280+ MPa (Zug)',
+                plot: 'cornering',
+                cam: 'iso'
+            },
+            2: {
+                title: 'Mode 2: Belt Cord Stresses (R_b1 < R_b2), Truss Effect & Ply Steer',
+                body: '<strong>1. Radius Difference R_b2 > R_b1:</strong> During contact patch flattening, outer belt ply 2 (<span class="mono">R_b2=308mm</span>) experiences noticeably higher bending tensile stress than inner ply 1 (<span class="mono">R_b1=303mm</span>).<br><strong>2. Truss Effect (±β):</strong> A flatter crown belt angle <span class="mono">±β_0</span> increases belt bending stiffness and shifts the <span class="mono">C_α(F_z)</span> curve upward.',
+                cbTitle: 'FEA Cord Stress σ_c & Edge Shear τ_xz',
+                cbUnit: 'MPa',
+                cbMin: 'Relieved',
+                cbMid: 'Pre-tension p_i',
+                cbMax: 'Peak Tension (Contact/Edge)',
+                plot: 'belt',
+                cam: 'belt'
+            },
+            3: {
+                title: 'Mode 3: Contact Mechanics, 3D Brush Model & Cornering Stiffness C_α',
+                body: 'In the <strong>adhesion zone</strong> (cyan), tread bristle tips adhere strictly to the green road streamlines in travel direction <span class="mono">v⃗</span>, while bristle bases follow the wheel heading yawed by <span class="mono">α</span>. Toggle between <span class="mono">C_α & CC_α(F_z)</span> and <span class="mono">p_z & τ_y(x)</span> in the plot!',
+                cbTitle: 'FEA Scale: Contact Pressure p_z & σ_c',
+                cbUnit: 'MPa',
+                cbMin: '0.0 MPa',
+                cbMid: 'Nominal p_i',
+                cbMax: 'Shoulder/Center Peak',
+                plot: 'cornering',
+                cam: 'bottom'
+            }
+        };
+
+        function setMode(modeNum) {
+            state.mode = modeNum;
+            [1, 2, 3].forEach(m => {
+                document.getElementById(`mode-${m}`).classList.toggle('active', m === modeNum);
+            });
+
+            const cfg = modeConfigs[modeNum];
+            document.getElementById('explain-title').innerHTML = cfg.title;
+            document.getElementById('explain-body').innerHTML = cfg.body;
+
+            setCordColorMode(state.cordColorMode);
+            setPlotType(cfg.plot);
+            setCameraPreset(cfg.cam);
+            updateAllGeometries();
+        }
+
+        function setBeltStackOrder(sign) {
+            state.beltStackSign = sign;
+            document.getElementById('stack-pos').classList.toggle('active', sign === 1);
+            document.getElementById('stack-neg').classList.toggle('active', sign === -1);
+            updatePhysicsEngine();
+            updateAllGeometries();
+            updateUIReadouts();
+        }
+
+        function setPlySteerMag(mag) {
+            state.plySteerMag = mag;
+            document.getElementById('ps-mag-1').classList.toggle('active', mag === 1);
+            document.getElementById('ps-mag-6').classList.toggle('active', mag === 6);
+            updateAllGeometries();
+            updateUIReadouts();
+        }
+
+        function setAlphaZeroPlySteerTest() {
+            document.getElementById('slider-alpha').value = 0.0;
+            document.getElementById('slider-kappa').value = 0.0;
+            handleInputChange();
+        }
+
+        function setAlphaDemoYawTest() {
+            document.getElementById('slider-alpha').value = 6.0;
+            handleInputChange();
+            setCameraPreset('yaw');
+        }
+
+        function setKappaQuickTest(kappaVal) {
+            document.getElementById('slider-kappa').value = kappaVal;
+            handleInputChange();
+        }
+
+        let camAnim = null;
+
+        function setCameraPreset(preset) {
+            ['iso', 'yaw', 'crown', 'belt', 'side', 'bottom'].forEach(p => {
+                const el = document.getElementById(`cam-${p}`);
+                if (el) el.classList.toggle('active', p === preset);
+            });
+
+            const presets = {
+                iso:    { pos: new THREE.Vector3(5.2, 2.7, 5.4),  target: new THREE.Vector3(0, 1.0, 0) },
+                yaw:    { pos: new THREE.Vector3(2.4, 7.5, 3.2),  target: new THREE.Vector3(0.4, 0.4, 0) },
+                crown:  { pos: new THREE.Vector3(0.0, 6.2, 0.01), target: new THREE.Vector3(0, 2.9, 0) },
+                belt:   { pos: new THREE.Vector3(2.3, 0.85, 2.5), target: new THREE.Vector3(0.55, 0.25, 0.45) },
+                side:   { pos: new THREE.Vector3(0.0, 1.4, 6.8),  target: new THREE.Vector3(0, 1.0, 0) },
+                bottom: { pos: new THREE.Vector3(0.2, -3.5, 1.4), target: new THREE.Vector3(0, 0.05, 0) }
+            };
+
+            const chosen = presets[preset];
+            if (!chosen || !controls) return;
+
+            camAnim = {
+                startPos: camera.position.clone(),
+                endPos: chosen.pos,
+                startTarget: controls.target.clone(),
+                endTarget: chosen.target,
+                progress: 0
+            };
+        }
+
+        function resetParameters() {
+            document.getElementById('slider-fz').value = 4.5;
+            document.getElementById('slider-pi').value = 2.4;
+            document.getElementById('slider-alpha').value = 4.0;
+            document.getElementById('slider-kappa').value = 0.0;
+            document.getElementById('slider-beta').value = 22.0;
+            document.getElementById('slider-speed').value = 30;
+
+            ['chk-rim', 'chk-carcass', 'chk-belt1', 'chk-belt2', 'chk-capply', 'chk-tread', 'chk-cutaway', 'chk-protractor', 'chk-cord-contrast'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.checked = true;
+            });
+
+            setCordColorMode('abs');
+            setBeltStackOrder(1);
+            setPlySteerMag(6);
+            handleInputChange();
+        }
+
+        function handleInputChange() {
+            state.Fz = parseFloat(document.getElementById('slider-fz').value);
+            state.pi = parseFloat(document.getElementById('slider-pi').value);
+            state.alpha = parseFloat(document.getElementById('slider-alpha').value);
+            state.kappa = parseFloat(document.getElementById('slider-kappa').value);
+            state.beta = parseFloat(document.getElementById('slider-beta').value);
+            state.speed = parseFloat(document.getElementById('slider-speed').value);
+
+            state.showRim = document.getElementById('chk-rim').checked;
+            state.showCarcass = document.getElementById('chk-carcass').checked;
+            state.showBelt1 = document.getElementById('chk-belt1').checked;
+            state.showBelt2 = document.getElementById('chk-belt2').checked;
+            state.showCapPly = document.getElementById('chk-capply').checked;
+            state.showTread = document.getElementById('chk-tread').checked;
+            state.showCutaway = document.getElementById('chk-cutaway').checked;
+            state.showProtractor = document.getElementById('chk-protractor').checked;
+            state.cordContrast = document.getElementById('chk-cord-contrast').checked;
+
+            updatePhysicsEngine();
+            updateAllGeometries();
+            updateUIReadouts();
+        }
+
+        ['slider-fz', 'slider-pi', 'slider-alpha', 'slider-kappa', 'slider-beta', 'slider-speed'].forEach(id => {
+            document.getElementById(id).addEventListener('input', handleInputChange);
+        });
+        ['chk-rim', 'chk-carcass', 'chk-belt1', 'chk-belt2', 'chk-capply', 'chk-tread', 'chk-cutaway', 'chk-protractor', 'chk-cord-contrast'].forEach(id => {
+            document.getElementById(id).addEventListener('change', handleInputChange);
+        });
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        /***********************************************************************
+         * 6. ANIMATION LOOP (UNIFIED ROLLPHASE & ROAD STREAMLINES)
+         ***********************************************************************/
+
+        let lastTime = performance.now();
+
+        function animate(now = performance.now()) {
+            requestAnimationFrame(animate);
+
+            const dt = Math.min(0.05, (now - lastTime) / 1000);
+            lastTime = now;
+
+            if (camAnim && controls) {
+                camAnim.progress += dt * 2.5;
+                const t = Math.min(1, camAnim.progress);
+                const ease = 1 - Math.pow(1 - t, 3);
+                camera.position.lerpVectors(camAnim.startPos, camAnim.endPos, ease);
+                controls.target.lerpVectors(camAnim.startTarget, camAnim.endTarget, ease);
+                if (t >= 1) camAnim = null;
+            }
+
+            if (state.speed > 0) {
+                const baseAngularSpeed = (state.speed / 35) * 0.72;
+                const wheelSlipFactor = Math.max(0.08, 1.0 + (state.kappa / 100.0) * 2.2);
+                const wheelAngularSpeed = baseAngularSpeed * wheelSlipFactor;
+
+                state.rollPhase = (state.rollPhase + dt * wheelAngularSpeed) % (Math.PI * 2);
+                state.roadFlowOffset = (state.roadFlowOffset + dt * baseAngularSpeed * 0.26) % 1;
+
+                rimGroup.rotation.z = -state.rollPhase;
+                updateYawAxisAndRoadIndicators();
+                updateCordReinforcementsAndSyncMarkers();
+                updateMode3FootprintVisuals();
+            }
+
+            if (controls) controls.update();
+            renderer.render(scene, camera);
+        }
+
+        window.onload = function () {
+            initScene();
+            animate();
+        };
+    </script>
+</body>
+</html>
