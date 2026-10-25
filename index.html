@@ -92,6 +92,245 @@
             border-color: #fbbf24;
             color: #fde68a;
         }
+        /* Theme & Shading Mode Buttons */
+        .theme-btn {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            color: #94a3b8;
+            cursor: pointer;
+        }
+        .theme-btn:hover {
+            color: #e2e8f0;
+            background: rgba(30, 41, 59, 0.8);
+        }
+        .theme-btn.active {
+            background: rgba(56, 189, 248, 0.25);
+            border-color: #38bdf8;
+            color: #38bdf8;
+            font-weight: 600;
+        }
+        .mat-preset-btn {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            color: #94a3b8;
+            cursor: pointer;
+        }
+        .mat-preset-btn:hover {
+            color: #e2e8f0;
+            background: rgba(30, 41, 59, 0.8);
+        }
+        .mat-preset-btn.active {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.35), rgba(99, 102, 241, 0.45));
+            border-color: #38bdf8;
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
+        }
+
+        /* Light Theme Overrides (Clean CAD/CAE Studio Theme) */
+        body.theme-light {
+            background-color: #e2e8f0;
+            color: #0f172a;
+        }
+        body.theme-light .cae-panel {
+            background: rgba(255, 255, 255, 0.93);
+            border-color: rgba(14, 165, 233, 0.32);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 0.85);
+        }
+        body.theme-light .text-white {
+            color: #0f172a !important;
+        }
+        body.theme-light .text-slate-200 {
+            color: #1e293b !important;
+        }
+        body.theme-light .text-slate-300 {
+            color: #334155 !important;
+        }
+        body.theme-light .text-slate-400 {
+            color: #475569 !important;
+        }
+        body.theme-light .text-slate-500 {
+            color: #64748b !important;
+        }
+        body.theme-light .text-slate-600 {
+            color: #94a3b8 !important;
+        }
+        body.theme-light .bg-slate-900\/90,
+        body.theme-light .bg-slate-900\/85,
+        body.theme-light .bg-slate-900\/75,
+        body.theme-light .bg-slate-900 {
+            background-color: rgba(241, 245, 249, 0.95) !important;
+        }
+        body.theme-light .bg-slate-950\/95,
+        body.theme-light .bg-slate-950\/85,
+        body.theme-light .bg-slate-950\/40,
+        body.theme-light .bg-slate-950\/30,
+        body.theme-light .bg-slate-950\/25,
+        body.theme-light .bg-slate-950 {
+            background-color: rgba(241, 245, 249, 0.90) !important;
+        }
+        body.theme-light .bg-slate-800,
+        body.theme-light .bg-slate-700 {
+            background-color: #e2e8f0 !important;
+        }
+        body.theme-light .bg-sky-950\/30,
+        body.theme-light .bg-sky-950\/35 {
+            background-color: rgba(224, 242, 254, 0.75) !important;
+        }
+        body.theme-light .bg-amber-950\/35,
+        body.theme-light .bg-amber-950\/25 {
+            background-color: rgba(254, 243, 199, 0.75) !important;
+        }
+        body.theme-light .bg-emerald-950\/30,
+        body.theme-light .bg-emerald-950\/25,
+        body.theme-light .bg-emerald-950 {
+            background-color: rgba(209, 250, 229, 0.80) !important;
+        }
+        body.theme-light .bg-rose-950\/35,
+        body.theme-light .bg-rose-950 {
+            background-color: rgba(255, 228, 230, 0.85) !important;
+        }
+        body.theme-light .border-slate-800,
+        body.theme-light .border-slate-800\/80,
+        body.theme-light .border-slate-800\/90,
+        body.theme-light .border-slate-700,
+        body.theme-light .border-slate-700\/60,
+        body.theme-light .border-slate-700\/70,
+        body.theme-light .border-slate-700\/80,
+        body.theme-light .border-slate-600 {
+            border-color: rgba(203, 213, 225, 0.85) !important;
+        }
+        body.theme-light .border-rose-500\/40,
+        body.theme-light .border-rose-500\/50 {
+            border-color: rgba(244, 63, 94, 0.45) !important;
+        }
+        body.theme-light .border-emerald-500\/30,
+        body.theme-light .border-emerald-500\/35,
+        body.theme-light .border-emerald-500\/40 {
+            border-color: rgba(16, 185, 129, 0.45) !important;
+        }
+
+        /* High-contrast accessible text colors in Light Mode */
+        body.theme-light .text-rose-300 {
+            color: #e11d48 !important;
+        }
+        body.theme-light .text-rose-400 {
+            color: #be123c !important;
+        }
+        body.theme-light .text-emerald-300 {
+            color: #059669 !important;
+        }
+        body.theme-light .text-emerald-400 {
+            color: #047857 !important;
+        }
+        body.theme-light .text-amber-300,
+        body.theme-light .text-yellow-300 {
+            color: #b45309 !important;
+        }
+        body.theme-light .text-amber-400 {
+            color: #d97706 !important;
+        }
+        body.theme-light .text-cyan-300 {
+            color: #0284c7 !important;
+        }
+        body.theme-light .text-cyan-400 {
+            color: #0369a1 !important;
+        }
+        body.theme-light .text-sky-300 {
+            color: #0284c7 !important;
+        }
+        body.theme-light .text-sky-400 {
+            color: #0369a1 !important;
+        }
+
+        /* Interactive buttons in light mode */
+        body.theme-light button.bg-slate-800:hover,
+        body.theme-light .hover\:bg-slate-700:hover {
+            background-color: #cbd5e1 !important;
+            color: #0f172a !important;
+        }
+        body.theme-light #plot-btn-cornering:hover,
+        body.theme-light #plot-btn-contact:hover,
+        body.theme-light #plot-btn-belt:hover {
+            background-color: #cbd5e1 !important;
+            color: #0f172a !important;
+        }
+        body.theme-light input[type=range] {
+            background: #cbd5e1;
+            border-color: rgba(148, 163, 184, 0.5);
+        }
+        body.theme-light .cam-btn {
+            background: #f8fafc;
+            color: #334155;
+            border-color: #cbd5e1;
+        }
+        body.theme-light .cam-btn:hover {
+            background: #e0f2fe;
+            color: #0284c7;
+            border-color: #38bdf8;
+        }
+        body.theme-light .cam-btn.active {
+            background: #e0f2fe;
+            color: #0284c7;
+            border-color: #0284c7;
+        }
+        body.theme-light .sub-btn {
+            background: #f1f5f9;
+            color: #334155;
+            border-color: #cbd5e1;
+        }
+        body.theme-light .sub-btn:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+        body.theme-light .sub-btn.active {
+            background: #fef3c7;
+            border-color: #f59e0b;
+            color: #b45309;
+        }
+        body.theme-light .mode-btn {
+            color: #334155;
+        }
+        body.theme-light .mode-btn:hover {
+            color: #0f172a;
+            background: #f1f5f9;
+        }
+        body.theme-light .mode-btn.active {
+            color: #ffffff;
+        }
+        body.theme-light #fea-plot {
+            background-color: #f8fafc !important;
+            border-color: #cbd5e1 !important;
+        }
+        body.theme-light .theme-btn {
+            background: rgba(241, 245, 249, 0.8);
+            border-color: #cbd5e1;
+            color: #64748b;
+        }
+        body.theme-light .theme-btn:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+        body.theme-light .theme-btn.active {
+            background: #e0f2fe;
+            border-color: #0284c7;
+            color: #0284c7;
+        }
+        body.theme-light .mat-preset-btn {
+            background: rgba(241, 245, 249, 0.8);
+            border-color: #cbd5e1;
+            color: #64748b;
+        }
+        body.theme-light .mat-preset-btn:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+        body.theme-light .mat-preset-btn.active {
+            background: linear-gradient(135deg, #0284c7, #2563eb);
+            border-color: #0284c7;
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
+        }
         .jet-gradient {
             background: linear-gradient(90deg, #00008b 0%, #0066ff 20%, #00ffff 40%, #00ff66 60%, #ffff00 80%, #ff0000 100%);
         }
@@ -145,6 +384,39 @@
                 <span class="w-2 h-2 rounded-full bg-rose-400"></span>
                 <span>3. Contact Mechanics & 3D Brush Model</span>
             </button>
+        </div>
+
+        <!-- Appearance Controls: Light/Dark Mode & Lighting/Reflectance Presets -->
+        <div class="cae-panel hud-interactive px-2.5 py-1.5 rounded-xl flex items-center gap-2 flex-wrap">
+            <!-- Theme Toggle: Dark vs Light -->
+            <div class="flex items-center gap-0.5 bg-slate-950/40 p-0.5 rounded-lg border border-slate-700/60" role="radiogroup" aria-label="Theme Mode">
+                <span class="text-[9.5px] uppercase font-bold text-slate-400 px-1 hidden lg:inline">Theme:</span>
+                <button id="theme-btn-dark" onclick="setTheme('dark')" class="theme-btn active px-2 py-0.5 rounded text-[11px] font-medium transition flex items-center gap-1" title="Dark space engineering theme (Default)">
+                    <span>🌙</span>
+                    <span>Dark</span>
+                </button>
+                <button id="theme-btn-light" onclick="setTheme('light')" class="theme-btn px-2 py-0.5 rounded text-[11px] font-medium transition flex items-center gap-1" title="Clean light CAD/CAE technical studio theme">
+                    <span>☀️</span>
+                    <span>Light</span>
+                </button>
+            </div>
+
+            <!-- Lighting & Reflectance Shading Options -->
+            <div class="flex items-center gap-0.5 bg-slate-950/40 p-0.5 rounded-lg border border-slate-700/60" role="radiogroup" aria-label="Lighting and Material Shading">
+                <span class="text-[9.5px] uppercase font-bold text-slate-400 px-1 hidden xl:inline">Shading:</span>
+                <button id="mat-btn-studio" onclick="setLightingAndMaterial('studio')" class="mat-preset-btn active px-2 py-0.5 rounded text-[11px] font-medium transition" title="Standard PBR: Realistic vulcanized matte rubber & metallic brass steel cords">
+                    Studio
+                </button>
+                <button id="mat-btn-gloss" onclick="setLightingAndMaterial('gloss')" class="mat-preset-btn px-2 py-0.5 rounded text-[11px] font-medium transition" title="Clearcoat: Wet tire dressing, glossy sheen & polished specular highlights">
+                    High-Gloss
+                </button>
+                <button id="mat-btn-matte" onclick="setLightingAndMaterial('matte')" class="mat-preset-btn px-2 py-0.5 rounded text-[11px] font-medium transition" title="CAE Technical: Diffuse low-glare inspection finish for optimal FEA stress readability">
+                    CAE Matte
+                </button>
+                <button id="mat-btn-showroom" onclick="setLightingAndMaterial('showroom')" class="mat-preset-btn px-2 py-0.5 rounded text-[11px] font-medium transition" title="Automotive Showroom: Dual-tone warm key / cool cyan rim lights with high contrast">
+                    Showroom
+                </button>
+            </div>
         </div>
 
         <!-- Camera Quick-Select Buttons -->
@@ -262,7 +534,7 @@
                     <div class="flex items-center justify-between text-[11px] pt-0.5">
                         <span class="text-slate-300">Ply Steer Deformation Magnifier:</span>
                         <div class="flex gap-1">
-                            <button id="ps-mag-1" onclick="setPlySteerMag(1)" class="px-1.5 py-0.5 rounded text-[10px] mono border border-slate-700 bg-slate-800 text-slate-300">1x</button>
+                            <button id="ps-mag-1" onclick="setPlySteerMag(1)" class="sub-btn px-1.5 py-0.5 rounded text-[10px] mono border border-slate-700 text-slate-300">1x</button>
                             <button id="ps-mag-6" onclick="setPlySteerMag(6)" class="sub-btn active px-1.5 py-0.5 rounded text-[10px] mono border border-slate-700 text-slate-300">6x (FEA Zoom)</button>
                         </div>
                     </div>
@@ -320,14 +592,18 @@
                         <input id="chk-tread" type="checkbox" checked class="accent-sky-400 w-3.5 h-3.5 rounded cursor-pointer">
                     </label>
 
-                    <div class="pt-1 border-t border-slate-800/90 grid grid-cols-2 gap-1 text-[11px]">
-                        <label class="flex items-center gap-1.5 cursor-pointer text-slate-300">
+                    <div class="pt-1 border-t border-slate-800/90 grid grid-cols-3 gap-1 text-[11px]">
+                        <label class="flex items-center gap-1.5 cursor-pointer text-slate-300" title="Toggle stepped cutaway view">
                             <input id="chk-cutaway" type="checkbox" checked class="accent-sky-400 w-3.5 h-3.5 rounded cursor-pointer">
-                            <span>Stepped Cutaway</span>
+                            <span>Cutaway</span>
                         </label>
-                        <label class="flex items-center gap-1.5 cursor-pointer text-amber-300">
+                        <label class="flex items-center gap-1.5 cursor-pointer text-amber-300" title="Toggle belt angle protractor and slip arc">
                             <input id="chk-protractor" type="checkbox" checked class="accent-amber-400 w-3.5 h-3.5 rounded cursor-pointer">
-                            <span>±β & α Angles</span>
+                            <span>±β & α</span>
+                        </label>
+                        <label class="flex items-center gap-1.5 cursor-pointer text-emerald-300" title="Toggle street road surface and grid visibility">
+                            <input id="chk-road" type="checkbox" checked class="accent-emerald-400 w-3.5 h-3.5 rounded cursor-pointer">
+                            <span>Street</span>
                         </label>
                     </div>
                 </div>
@@ -550,6 +826,8 @@
 
         // Application State
         const state = {
+            theme: 'dark',               // 'dark': High-contrast dark engineering HUD, 'light': Clean CAD/CAE technical studio
+            shadingPreset: 'studio',     // 'studio', 'gloss', 'matte', 'showroom'
             mode: 1,                     // 1: Load Paths, 2: Belt Mechanics & Ply Steer, 3: Brush Model
             plotType: 'cornering',       // 'cornering', 'contact', or 'belt'
             cordColorMode: 'abs',        // 'abs': Absolute cord stress [MPa], 'delta': Dynamic change in footprint, 'layer': Component colors
@@ -572,6 +850,7 @@
             showTread: true,
             showCutaway: true,
             showProtractor: true,
+            showRoad: true,
 
             // Unified rotation variable [rad] for both rim and tire material
             rollPhase: 0,
@@ -614,6 +893,9 @@
 
         // Three.js Globals
         let scene, camera, renderer, controls;
+        let ambientLight, mainLight, fillLight, bottomLight;
+        let roadGlassMesh, roadGrid, roadGlassMat, roadGroup;
+        let rimMat, beadMat, hubMat, spokeMat;
         let wheelYawGroup;               // Parent group rotating around vertical Hochachse (Y in Three.js) by slip angle alpha!
         let tireGroup, rimGroup;
         let carcassMesh, belt1Mesh, belt2Mesh, capPlyMesh, treadMesh;
@@ -1081,6 +1363,8 @@
             renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.0;
             container.appendChild(renderer.domElement);
 
             if (typeof THREE.OrbitControls !== 'undefined') {
@@ -1092,17 +1376,18 @@
                 controls.minDistance = 1.0;
             }
 
-            scene.add(new THREE.AmbientLight(0xdbeafe, 0.78));
+            ambientLight = new THREE.AmbientLight(0xdbeafe, 0.78);
+            scene.add(ambientLight);
 
-            const mainLight = new THREE.DirectionalLight(0xffffff, 1.15);
+            mainLight = new THREE.DirectionalLight(0xffffff, 1.15);
             mainLight.position.set(6, 10, 7);
             scene.add(mainLight);
 
-            const fillLight = new THREE.DirectionalLight(0x38bdf8, 0.55);
+            fillLight = new THREE.DirectionalLight(0x38bdf8, 0.55);
             fillLight.position.set(-7, 4, -5);
             scene.add(fillLight);
 
-            const bottomLight = new THREE.PointLight(0x0ea5e9, 0.85, 10);
+            bottomLight = new THREE.PointLight(0x0ea5e9, 0.85, 10);
             bottomLight.position.set(0, -2.2, 0);
             scene.add(bottomLight);
 
@@ -1125,31 +1410,35 @@
             updatePhysicsEngine();
             updateAllGeometries();
             updateUIReadouts();
+            applyMaterialAndLightingPreset(state.shadingPreset);
 
             window.addEventListener('resize', onWindowResize);
         }
 
         function createGlassRoadPlaneAndYawIndicators() {
-            const roadGroup = new THREE.Group();
+            roadGroup = new THREE.Group();
 
             const glassGeo = new THREE.PlaneGeometry(16, 16);
-            const glassMat = new THREE.MeshPhysicalMaterial({
+            roadGlassMat = new THREE.MeshPhysicalMaterial({
                 color: 0x0f172a,
                 transparent: true,
-                opacity: 0.34,
+                opacity: 0.0,
                 roughness: 0.15,
                 metalness: 0.1,
                 side: THREE.DoubleSide,
                 depthWrite: false
             });
-            const glassMesh = new THREE.Mesh(glassGeo, glassMat);
-            glassMesh.rotation.x = -Math.PI / 2;
-            glassMesh.position.y = -0.006;
-            roadGroup.add(glassMesh);
+            roadGlassMesh = new THREE.Mesh(glassGeo, roadGlassMat);
+            roadGlassMesh.rotation.x = -Math.PI / 2;
+            roadGlassMesh.position.y = -0.006;
+            roadGlassMesh.visible = false; // Completely transparent street plane
+            roadGroup.add(roadGlassMesh);
 
-            const grid = new THREE.GridHelper(16, 32, 0x0284c7, 0x1e293b);
-            grid.position.y = -0.003;
-            roadGroup.add(grid);
+            roadGrid = new THREE.GridHelper(16, 32, 0x0284c7, 0x1e293b);
+            roadGrid.position.y = -0.003;
+            roadGrid.material.transparent = true;
+            roadGrid.material.opacity = 0.20; // Only grid is slightly visible
+            roadGroup.add(roadGrid);
 
             const numStreamLines = 11;
             const segPerLine = 10;
@@ -1339,7 +1628,7 @@
             geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
             geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-            const material = new THREE.MeshStandardMaterial({
+            const material = new THREE.MeshPhysicalMaterial({
                 vertexColors: true,
                 side: THREE.DoubleSide,
                 roughness: 0.45,
@@ -1394,7 +1683,7 @@
             const barrelGeo = new THREE.CylinderGeometry(R_RIM - 0.05, R_RIM - 0.05, TIRE_HALF_WIDTH * 1.52, 48, 1, true);
             barrelGeo.rotateZ(Math.PI / 2);
             barrelGeo.rotateY(Math.PI / 2);
-            const rimMat = new THREE.MeshStandardMaterial({
+            rimMat = new THREE.MeshStandardMaterial({
                 color: 0x94a3b8,
                 metalness: 0.82,
                 roughness: 0.22,
@@ -1409,7 +1698,7 @@
                 rimGroup.add(flange);
 
                 const beadGeo = new THREE.TorusGeometry(R_RIM + 0.055, 0.042, 14, 64);
-                const beadMat = new THREE.MeshStandardMaterial({
+                beadMat = new THREE.MeshStandardMaterial({
                     color: 0xd946ef,
                     emissive: 0x701a75,
                     emissiveIntensity: 0.45,
@@ -2128,6 +2417,7 @@
             const wheelCenterY = R_UNLOADED - defl;
 
             updateYawAxisAndRoadIndicators();
+            if (roadGroup) roadGroup.visible = state.showRoad;
 
             rimGroup.visible = state.showRim;
             rimGroup.position.set(0, wheelCenterY, 0);
@@ -2223,11 +2513,12 @@
             const ctx = canvas.getContext('2d');
             const W = canvas.width;
             const H = canvas.height;
+            const isLight = (state.theme === 'light');
 
             ctx.clearRect(0, 0, W, H);
 
             // Subtle background grid
-            ctx.strokeStyle = 'rgba(51, 65, 85, 0.42)';
+            ctx.strokeStyle = isLight ? 'rgba(203, 213, 225, 0.85)' : 'rgba(51, 65, 85, 0.42)';
             ctx.lineWidth = 1;
             for (let gx = 1; gx < 4; gx++) {
                 ctx.beginPath();
@@ -2266,13 +2557,13 @@
                 const mapY_CC = (cc) => padT + plotH - THREE.MathUtils.clamp(cc / CCMax, 0, 1.04) * plotH;
 
                 ctx.font = '9px "JetBrains Mono", monospace';
-                ctx.fillStyle = '#38bdf8';
+                ctx.fillStyle = isLight ? '#0284c7' : '#38bdf8';
                 ctx.textAlign = 'left';
                 ctx.fillText('1400', 2, padT + 6);
                 ctx.fillText('700', 2, padT + plotH * 0.5 + 3);
                 ctx.fillText('0', 12, padT + plotH);
 
-                ctx.fillStyle = '#fb7185';
+                ctx.fillStyle = isLight ? '#e11d48' : '#fb7185';
                 ctx.textAlign = 'right';
                 ctx.fillText('0.40', W - 2, padT + 6);
                 ctx.fillText('0.20', W - 2, padT + plotH * 0.5 + 3);
@@ -2300,8 +2591,8 @@
                     strokeCurve(ccRefPts, 'rgba(251, 113, 133, 0.30)', 1.3, true);
                 }
 
-                strokeCurve(caCurPts, '#38bdf8', 2.3);
-                strokeCurve(ccCurPts, '#fb7185', 2.3);
+                strokeCurve(caCurPts, isLight ? '#0284c7' : '#38bdf8', 2.3);
+                strokeCurve(ccCurPts, isLight ? '#e11d48' : '#fb7185', 2.3);
 
                 const opX = mapX(state.Fz);
                 const opY_Ca = mapY_Ca(state.C_alpha_deg);
@@ -2380,10 +2671,10 @@
                 ctx.textAlign = alignLeft ? 'right' : 'left';
                 ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
 
-                ctx.fillStyle = '#7dd3fc';
+                ctx.fillStyle = isLight ? '#0369a1' : '#7dd3fc';
                 ctx.fillText(`C_α: ${Math.round(state.C_alpha_deg)} N/deg`, labelX, Math.max(padT + 10, Math.min(H - 22, opY_Ca - 5)));
 
-                ctx.fillStyle = '#fda4af';
+                ctx.fillStyle = isLight ? '#be123c' : '#fda4af';
                 ctx.fillText(`CC_α: ${state.CC_alpha_deg.toFixed(3)} /deg`, labelX, Math.max(padT + 21, Math.min(H - 10, opY_CC + 11)));
 
                 return;
@@ -2418,9 +2709,9 @@
                     plySkewPts.push({ x: px, y: H - 10 - THREE.MathUtils.clamp(plySkewNorm, 0.05, 0.95) * (H - 22) });
                 }
 
-                strokeCurve(plySkewPts, '#facc15', 1.6, true);
-                strokeCurve(pzPts, '#38bdf8', 2.2);
-                strokeCurve(tauPts, '#10b981', 2.2);
+                strokeCurve(plySkewPts, isLight ? '#b45309' : '#facc15', 1.6, true);
+                strokeCurve(pzPts, isLight ? '#0284c7' : '#38bdf8', 2.2);
+                strokeCurve(tauPts, isLight ? '#059669' : '#10b981', 2.2);
             } else {
                 const edgePts = [];
                 const dBetaPts = [];
@@ -2442,9 +2733,9 @@
                     plyShearPts.push({ x: px, y: H - 10 - THREE.MathUtils.clamp(plyShear, 0.05, 1) * (H - 22) });
                 }
 
-                strokeCurve(plyShearPts, '#fde047', 1.7, true);
-                strokeCurve(dBetaPts, '#22d3ee', 2.2);
-                strokeCurve(edgePts, '#fbbf24', 2.3);
+                strokeCurve(plyShearPts, isLight ? '#b45309' : '#fde047', 1.7, true);
+                strokeCurve(dBetaPts, isLight ? '#0891b2' : '#22d3ee', 2.2);
+                strokeCurve(edgePts, isLight ? '#d97706' : '#fbbf24', 2.3);
             }
         }
 
@@ -2501,7 +2792,324 @@
         }
 
         /***********************************************************************
-         * 5. MODE SWITCHING, PLY STEER TOGGLES & CAMERA PRESETS
+         * 5. APPEARANCE, THEMES, LIGHTING & SHADING PRESETS
+         ***********************************************************************/
+
+        function setTheme(themeName) {
+            state.theme = themeName;
+            const isLight = (themeName === 'light');
+
+            const btnDark = document.getElementById('theme-btn-dark');
+            const btnLight = document.getElementById('theme-btn-light');
+            if (btnDark) btnDark.classList.toggle('active', !isLight);
+            if (btnLight) btnLight.classList.toggle('active', isLight);
+
+            if (isLight) {
+                document.body.classList.add('theme-light');
+                if (scene) scene.background = new THREE.Color(0xe2e8f0);
+                if (scene && scene.fog) scene.fog.color.setHex(0xe2e8f0);
+                if (roadGrid) {
+                    roadGrid.material.color.setHex(0x0284c7);
+                    roadGrid.material.transparent = true;
+                    roadGrid.material.opacity = 0.22;
+                }
+                if (roadGlassMat) {
+                    roadGlassMat.opacity = 0.0;
+                    if (roadGlassMesh) roadGlassMesh.visible = false;
+                }
+            } else {
+                document.body.classList.remove('theme-light');
+                if (scene) scene.background = new THREE.Color(0x050811);
+                if (scene && scene.fog) scene.fog.color.setHex(0x050811);
+                if (roadGrid) {
+                    roadGrid.material.color.setHex(0x0284c7);
+                    roadGrid.material.transparent = true;
+                    roadGrid.material.opacity = 0.18;
+                }
+                if (roadGlassMat) {
+                    roadGlassMat.opacity = 0.0;
+                    if (roadGlassMesh) roadGlassMesh.visible = false;
+                }
+            }
+
+            applyMaterialAndLightingPreset(state.shadingPreset);
+            drawLongitudinalFEAPlot();
+        }
+
+        function setLightingAndMaterial(presetName) {
+            state.shadingPreset = presetName;
+
+            ['studio', 'gloss', 'matte', 'showroom'].forEach(p => {
+                const btn = document.getElementById(`mat-btn-${p}`);
+                if (btn) btn.classList.toggle('active', p === presetName);
+            });
+
+            applyMaterialAndLightingPreset(presetName);
+        }
+
+        function applyMaterialAndLightingPreset(presetName) {
+            if (!carcassMesh) return;
+            const isLight = (state.theme === 'light');
+
+            if (presetName === 'gloss') {
+                // High-Gloss: Physical Clearcoat, wet tire dressing, mirror specular highlights
+                if (ambientLight) {
+                    ambientLight.color.setHex(isLight ? 0xe2e8f0 : 0x94a3b8);
+                    ambientLight.intensity = isLight ? 0.65 : 0.45;
+                }
+                if (mainLight) {
+                    mainLight.color.setHex(0xffffff);
+                    mainLight.intensity = 1.75;
+                    mainLight.position.set(5, 12, 6);
+                }
+                if (fillLight) {
+                    fillLight.color.setHex(0x7dd3fc);
+                    fillLight.intensity = 0.85;
+                    fillLight.position.set(-6, 6, -5);
+                }
+                if (bottomLight) {
+                    bottomLight.color.setHex(0x38bdf8);
+                    bottomLight.intensity = 1.25;
+                }
+
+                // Materials: Physical Clearcoat & High Gloss
+                if (treadMesh && treadMesh.material) {
+                    treadMesh.material.roughness = 0.22;
+                    treadMesh.material.metalness = 0.12;
+                    treadMesh.material.clearcoat = 0.95;
+                    treadMesh.material.clearcoatRoughness = 0.10;
+                }
+                if (carcassMesh && carcassMesh.material) {
+                    carcassMesh.material.roughness = 0.20;
+                    carcassMesh.material.metalness = 0.35;
+                    carcassMesh.material.clearcoat = 0.85;
+                    carcassMesh.material.clearcoatRoughness = 0.12;
+                }
+                if (belt1Mesh && belt1Mesh.material) {
+                    belt1Mesh.material.roughness = 0.12;
+                    belt1Mesh.material.metalness = 0.95;
+                    belt1Mesh.material.clearcoat = 0.85;
+                }
+                if (belt2Mesh && belt2Mesh.material) {
+                    belt2Mesh.material.roughness = 0.12;
+                    belt2Mesh.material.metalness = 0.95;
+                    belt2Mesh.material.clearcoat = 0.85;
+                }
+                if (capPlyMesh && capPlyMesh.material) {
+                    capPlyMesh.material.roughness = 0.18;
+                    capPlyMesh.material.metalness = 0.40;
+                    capPlyMesh.material.clearcoat = 0.75;
+                }
+                if (rimMat) {
+                    rimMat.roughness = 0.10;
+                    rimMat.metalness = 0.98;
+                }
+                if (beadMat) {
+                    beadMat.roughness = 0.15;
+                    beadMat.metalness = 0.90;
+                }
+                if (roadGlassMat) {
+                    roadGlassMat.roughness = 0.05;
+                    roadGlassMat.metalness = 0.25;
+                    roadGlassMat.clearcoat = 1.0;
+                }
+            } else if (presetName === 'matte') {
+                // CAE Matte: Technical low-glare diffuse inspection finish
+                if (ambientLight) {
+                    ambientLight.color.setHex(isLight ? 0xffffff : 0xf1f5f9);
+                    ambientLight.intensity = isLight ? 1.40 : 1.25;
+                }
+                if (mainLight) {
+                    mainLight.color.setHex(0xffffff);
+                    mainLight.intensity = 0.60;
+                    mainLight.position.set(0, 15, 0);
+                }
+                if (fillLight) {
+                    fillLight.color.setHex(0xe2e8f0);
+                    fillLight.intensity = 0.40;
+                    fillLight.position.set(6, 4, 6);
+                }
+                if (bottomLight) {
+                    bottomLight.color.setHex(0x94a3b8);
+                    bottomLight.intensity = 0.45;
+                }
+
+                // Materials: Pure diffuse matte finish without specular glare
+                [treadMesh, carcassMesh, belt1Mesh, belt2Mesh, capPlyMesh].forEach(m => {
+                    if (m && m.material) {
+                        m.material.clearcoat = 0.0;
+                        m.material.clearcoatRoughness = 0.0;
+                    }
+                });
+
+                if (treadMesh && treadMesh.material) {
+                    treadMesh.material.roughness = 0.96;
+                    treadMesh.material.metalness = 0.00;
+                }
+                if (carcassMesh && carcassMesh.material) {
+                    carcassMesh.material.roughness = 0.92;
+                    carcassMesh.material.metalness = 0.00;
+                }
+                if (belt1Mesh && belt1Mesh.material) {
+                    belt1Mesh.material.roughness = 0.85;
+                    belt1Mesh.material.metalness = 0.08;
+                }
+                if (belt2Mesh && belt2Mesh.material) {
+                    belt2Mesh.material.roughness = 0.85;
+                    belt2Mesh.material.metalness = 0.08;
+                }
+                if (capPlyMesh && capPlyMesh.material) {
+                    capPlyMesh.material.roughness = 0.90;
+                    capPlyMesh.material.metalness = 0.05;
+                }
+                if (rimMat) {
+                    rimMat.roughness = 0.72;
+                    rimMat.metalness = 0.25;
+                }
+                if (beadMat) {
+                    beadMat.roughness = 0.65;
+                    beadMat.metalness = 0.20;
+                }
+                if (roadGlassMat) {
+                    roadGlassMat.roughness = 0.80;
+                    roadGlassMat.metalness = 0.0;
+                    roadGlassMat.clearcoat = 0.0;
+                }
+            } else if (presetName === 'showroom') {
+                // Automotive Showroom: Dual-tone warm key / cold cyan rim lights with high contrast
+                if (ambientLight) {
+                    ambientLight.color.setHex(isLight ? 0xddd6fe : 0x1e1b4b);
+                    ambientLight.intensity = isLight ? 0.75 : 0.55;
+                }
+                if (mainLight) {
+                    mainLight.color.setHex(0xffedd5); // Warm gold key
+                    mainLight.intensity = 1.70;
+                    mainLight.position.set(7, 9, 8);
+                }
+                if (fillLight) {
+                    fillLight.color.setHex(0x06b6d4); // Cool cyan rim
+                    fillLight.intensity = 1.20;
+                    fillLight.position.set(-8, 5, -6);
+                }
+                if (bottomLight) {
+                    bottomLight.color.setHex(0x8b5cf6); // Electric violet underglow
+                    bottomLight.intensity = 1.50;
+                }
+
+                // Materials: Rich automotive presentation finish
+                if (treadMesh && treadMesh.material) {
+                    treadMesh.material.roughness = 0.40;
+                    treadMesh.material.metalness = 0.28;
+                    treadMesh.material.clearcoat = 0.60;
+                    treadMesh.material.clearcoatRoughness = 0.20;
+                }
+                if (carcassMesh && carcassMesh.material) {
+                    carcassMesh.material.roughness = 0.32;
+                    carcassMesh.material.metalness = 0.45;
+                    carcassMesh.material.clearcoat = 0.50;
+                }
+                if (belt1Mesh && belt1Mesh.material) {
+                    belt1Mesh.material.roughness = 0.18;
+                    belt1Mesh.material.metalness = 0.88;
+                    belt1Mesh.material.clearcoat = 0.70;
+                }
+                if (belt2Mesh && belt2Mesh.material) {
+                    belt2Mesh.material.roughness = 0.18;
+                    belt2Mesh.material.metalness = 0.88;
+                    belt2Mesh.material.clearcoat = 0.70;
+                }
+                if (capPlyMesh && capPlyMesh.material) {
+                    capPlyMesh.material.roughness = 0.26;
+                    capPlyMesh.material.metalness = 0.42;
+                    capPlyMesh.material.clearcoat = 0.55;
+                }
+                if (rimMat) {
+                    rimMat.roughness = 0.22;
+                    rimMat.metalness = 0.92;
+                }
+                if (beadMat) {
+                    beadMat.roughness = 0.20;
+                    beadMat.metalness = 0.85;
+                }
+                if (roadGlassMat) {
+                    roadGlassMat.roughness = 0.10;
+                    roadGlassMat.metalness = 0.35;
+                    roadGlassMat.clearcoat = 0.80;
+                }
+            } else {
+                // Standard Studio PBR (Default)
+                if (ambientLight) {
+                    ambientLight.color.setHex(isLight ? 0xffffff : 0xdbeafe);
+                    ambientLight.intensity = isLight ? 0.95 : 0.78;
+                }
+                if (mainLight) {
+                    mainLight.color.setHex(0xffffff);
+                    mainLight.intensity = isLight ? 1.05 : 1.15;
+                    mainLight.position.set(6, 10, 7);
+                }
+                if (fillLight) {
+                    fillLight.color.setHex(isLight ? 0x94a3b8 : 0x38bdf8);
+                    fillLight.intensity = isLight ? 0.45 : 0.55;
+                    fillLight.position.set(-7, 4, -5);
+                }
+                if (bottomLight) {
+                    bottomLight.color.setHex(isLight ? 0x0284c7 : 0x0ea5e9);
+                    bottomLight.intensity = isLight ? 0.65 : 0.85;
+                }
+
+                // Materials: Realistic vulcanized rubber & metallic brass cords
+                [treadMesh, carcassMesh, belt1Mesh, belt2Mesh, capPlyMesh].forEach(m => {
+                    if (m && m.material) {
+                        m.material.clearcoat = 0.0;
+                        m.material.clearcoatRoughness = 0.0;
+                    }
+                });
+
+                if (treadMesh && treadMesh.material) {
+                    treadMesh.material.roughness = 0.75;
+                    treadMesh.material.metalness = 0.08;
+                }
+                if (carcassMesh && carcassMesh.material) {
+                    carcassMesh.material.roughness = 0.45;
+                    carcassMesh.material.metalness = 0.18;
+                }
+                if (belt1Mesh && belt1Mesh.material) {
+                    belt1Mesh.material.roughness = 0.28;
+                    belt1Mesh.material.metalness = 0.65;
+                }
+                if (belt2Mesh && belt2Mesh.material) {
+                    belt2Mesh.material.roughness = 0.28;
+                    belt2Mesh.material.metalness = 0.65;
+                }
+                if (capPlyMesh && capPlyMesh.material) {
+                    capPlyMesh.material.roughness = 0.38;
+                    capPlyMesh.material.metalness = 0.22;
+                }
+                if (rimMat) {
+                    rimMat.roughness = 0.35;
+                    rimMat.metalness = 0.82;
+                }
+                if (beadMat) {
+                    beadMat.roughness = 0.25;
+                    beadMat.metalness = 0.70;
+                }
+                if (roadGlassMat) {
+                    roadGlassMat.roughness = 0.15;
+                    roadGlassMat.metalness = 0.10;
+                    roadGlassMat.clearcoat = 0.0;
+                }
+            }
+
+            [carcassMesh, belt1Mesh, belt2Mesh, capPlyMesh, treadMesh].forEach(m => {
+                if (m && m.material) m.material.needsUpdate = true;
+            });
+            if (rimMat) rimMat.needsUpdate = true;
+            if (beadMat) beadMat.needsUpdate = true;
+            if (roadGlassMat) roadGlassMat.needsUpdate = true;
+        }
+
+        /***********************************************************************
+         * 6. MODE SWITCHING, PLY STEER TOGGLES & CAMERA PRESETS
          ***********************************************************************/
 
         function setCordColorMode(cMode) {
@@ -2597,6 +3205,7 @@
             updatePhysicsEngine();
             updateAllGeometries();
             updateUIReadouts();
+            applyMaterialAndLightingPreset(state.shadingPreset);
         }
 
         function setPlySteerMag(mag) {
@@ -2661,7 +3270,7 @@
             document.getElementById('slider-beta').value = 22.0;
             document.getElementById('slider-speed').value = 30;
 
-            ['chk-rim', 'chk-carcass', 'chk-belt1', 'chk-belt2', 'chk-capply', 'chk-tread', 'chk-cutaway', 'chk-protractor', 'chk-cord-contrast'].forEach(id => {
+            ['chk-rim', 'chk-carcass', 'chk-belt1', 'chk-belt2', 'chk-capply', 'chk-tread', 'chk-cutaway', 'chk-protractor', 'chk-road', 'chk-cord-contrast'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.checked = true;
             });
@@ -2688,17 +3297,19 @@
             state.showTread = document.getElementById('chk-tread').checked;
             state.showCutaway = document.getElementById('chk-cutaway').checked;
             state.showProtractor = document.getElementById('chk-protractor').checked;
+            state.showRoad = document.getElementById('chk-road').checked;
             state.cordContrast = document.getElementById('chk-cord-contrast').checked;
 
             updatePhysicsEngine();
             updateAllGeometries();
             updateUIReadouts();
+            applyMaterialAndLightingPreset(state.shadingPreset);
         }
 
         ['slider-fz', 'slider-pi', 'slider-alpha', 'slider-kappa', 'slider-beta', 'slider-speed'].forEach(id => {
             document.getElementById(id).addEventListener('input', handleInputChange);
         });
-        ['chk-rim', 'chk-carcass', 'chk-belt1', 'chk-belt2', 'chk-capply', 'chk-tread', 'chk-cutaway', 'chk-protractor', 'chk-cord-contrast'].forEach(id => {
+        ['chk-rim', 'chk-carcass', 'chk-belt1', 'chk-belt2', 'chk-capply', 'chk-tread', 'chk-cutaway', 'chk-protractor', 'chk-road', 'chk-cord-contrast'].forEach(id => {
             document.getElementById(id).addEventListener('change', handleInputChange);
         });
 
@@ -2739,6 +3350,7 @@
 
                 rimGroup.rotation.z = -state.rollPhase;
                 updateYawAxisAndRoadIndicators();
+            if (roadGroup) roadGroup.visible = state.showRoad;
                 updateCordReinforcementsAndSyncMarkers();
                 updateMode3FootprintVisuals();
             }
@@ -2750,6 +3362,19 @@
         window.onload = function () {
             initScene();
             animate();
+            window.state = state;
+            window.treadMesh = treadMesh;
+            window.carcassMesh = carcassMesh;
+            window.belt1Mesh = belt1Mesh;
+            window.belt2Mesh = belt2Mesh;
+            window.capPlyMesh = capPlyMesh;
+            window.mainLight = mainLight;
+            window.ambientLight = ambientLight;
+            window.fillLight = fillLight;
+            window.bottomLight = bottomLight;
+            window.roadGroup = roadGroup;
+            window.roadGrid = roadGrid;
+            window.roadGlassMesh = roadGlassMesh;
         };
     </script>
 </body>

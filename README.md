@@ -33,6 +33,7 @@ An interactive real-time 3D structural mechanics and Finite Element Analysis (FE
    - [8.4 Parameter Sliders & Quick-Test Controls](#84-parameter-sliders--quick-test-controls)
    - [8.5 Structural Layer Cutaway Toggles & Color Mapping Modes](#85-structural-layer-cutaway-toggles--color-mapping-modes)
    - [8.6 3D Reference Coordinate Triad & HUD Navigation Bar](#86-3d-reference-coordinate-triad--hud-navigation-bar)
+   - [8.7 Appearance & Shading Controls (Theme & Reflectance Modes)](#87-appearance--shading-controls-theme--reflectance-modes)
 9. [Scientific References & Literature Citations](#9-scientific-references--literature-citations)
    - [9.1 Primary Academic Literature & Textbooks](#91-primary-academic-literature--textbooks)
    - [9.2 Industry Standards & SAE / ISO Norms](#92-industry-standards--sae--iso-norms)
@@ -346,7 +347,8 @@ An automated parameter sweep across 810 permutations:
 - **Rolling Speed ($v$):** $0\text{ km/h}$ to $100\text{ km/h}$ (step: $5\text{ km/h}$).
 
 ### 8.5 Structural Layer Cutaway Toggles & Color Mapping Modes
-- **Individual Layer Checkboxes:** Rim/Bead, 90° Carcass, Belt Ply 1, Belt Ply 2, 0° Cap Ply, Tread/Sidewall, Stepped Cutaway, and Protractor Overlay.
+- **Individual Layer Checkboxes:** Rim/Bead, 90° Carcass, Belt Ply 1, Belt Ply 2, 0° Cap Ply, Tread/Sidewall, Stepped Cutaway, Protractor Overlay (±β & α), and Street Surface / Grid.
+- **Street / Ground Plane Transparency:** The solid street plane is rendered completely transparent (`opacity = 0`, hidden), allowing unobstructed bottom-up inspection of contact patch shear and bristle kinematics, while a subtle reference road grid remains slightly visible (`opacity = 0.20`). The ground grid and flow lines can be toggled on/off via the `Street` checkbox.
 - **Color Mapping Modes:**
   - `σ_c Absolute`: Total cord tensile stress [MPa].
   - `Δσ_c Dynamic`: Dynamic stress variation $\Delta\sigma_c = \sigma_c - \sigma_0$ relative to inflation pre-tension.
@@ -359,6 +361,16 @@ An automated parameter sweep across 810 permutations:
   - **Amber Arrow $+Y$:** Lateral axis / wheel rotation & spin axis (collinear with wheel spindle).
   - **Sky Blue Arrow $+Z$:** Vertical axis / road normal / yaw axis.
 - **HUD Footer Bar:** Displays real-time viewport orbit controls and coordinate conventions.
+
+### 8.7 Appearance & Shading Controls (Theme & Reflectance Modes)
+- **Theme Modes (Dark / Light):**
+  - **🌙 Dark Mode (Default):** Deep space engineering HUD (`0x050811` viewport, dark slate telemetry panels) for low-glare dark-room analysis.
+  - **☀️ Light Mode:** Clean CAD/CAE technical studio theme (`0xe2e8f0` viewport, clean off-white telemetry panels, light road grid) optimized for documentation, reports, and daytime viewing.
+- **Lighting & Material Reflectance Presets:**
+  - **Studio (PBR):** Balanced three-point studio lighting with physically realistic vulcanized matte rubber (`roughness = 0.75`), metallic brass steel belt cords, and machined alloy rim.
+  - **High-Gloss:** Physical clearcoat topcoat (`clearcoat = 0.95`, `clearcoatRoughness = 0.10`) simulating wet tire dressing sheen, polished chrome rim, and sharp specular glints.
+  - **CAE Matte:** Technical low-glare diffuse inspection finish (`roughness = 0.96`, zero specular reflections) with neutral overhead illumination to maximize FEA stress tensor readability.
+  - **Showroom:** Dual-tone automotive presentation setup with warm golden key illumination (`0xffedd5`), electric cyan rim back-light (`0x06b6d4`), and violet road underglow.
 
 ---
 
